@@ -2,6 +2,7 @@ import 'package:isar_community/isar.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/extensions/date_time_extensions.dart';
+import '../../../core/storage/entities/category_entity.dart';
 import '../../../core/storage/entities/transaction_entity.dart';
 import '../../../core/storage/isar_service.dart';
 import '../../../core/utils/app_logger.dart';
@@ -80,7 +81,46 @@ class TransactionRepositoryImpl implements TransactionRepository {
     final String search = query.search.trim().toLowerCase();
     if (search.isEmpty) return domain.toList();
 
-    return domain.where((Transaction t) => t.searchHaystack.contains(search)).toList();
+    final List<CategoryEntity> catEntities = await _isar.categories.where().findAll();
+    final Map<String, String> categoryNames = <String, String>{for (final CategoryEntity c in catEntities) c.uid: c.name.toLowerCase()};
+
+    final String cleanSearch = search.replaceAll(RegExp(r'[\$,€,£,¥,₹]'), '').trim();
+    final List<String> searchTokens = (cleanSearch.isNotEmpty ? cleanSearch : search)
+        .split(RegExp(r'\s+'))
+        .where((String s) => s.isNotEmpty)
+        .toList();
+
+    const List<String> monthNames = <String>[
+      '',
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
+    ];
+
+    const List<String> shortMonthNames = <String>['', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+    return domain.where((Transaction t) {
+      final String catName = categoryNames[t.categoryId] ?? '';
+      final String amountStr = t.amount.toString();
+      final String amountFixed = t.amount.toStringAsFixed(2);
+      final String typeStr = t.type.name.toLowerCase();
+      final String monthName = (t.date.month >= 1 && t.date.month <= 12) ? monthNames[t.date.month] : '';
+      final String shortMonth = (t.date.month >= 1 && t.date.month <= 12) ? shortMonthNames[t.date.month] : '';
+      final String yearStr = t.date.year.toString();
+
+      final String fullHaystack = '${t.searchHaystack} $catName $amountStr $amountFixed $typeStr $monthName $shortMonth $yearStr'.toLowerCase();
+
+      return searchTokens.every(fullHaystack.contains);
+    }).toList();
   }
 
   List<Transaction> _sorted(List<Transaction> items, TransactionSort sort) {

@@ -8,6 +8,8 @@ void main() {
     test('formats currency with the right symbol', () {
       expect(1234.5.toCurrency(), r'$1,234.50');
       expect(99.0.toCurrency(currencyCode: 'EUR'), '€99.00');
+      expect(5000.0.toCurrency(currencyCode: 'MMK'), 'K5,000.00');
+      expect(NumX.currencySymbolFor('MMK'), 'K');
     });
 
     test('compacts large amounts for tight layouts', () {
@@ -64,14 +66,8 @@ void main() {
     });
 
     test('range check ignores the time component', () {
-      expect(
-        wednesday.isBetween(DateTime(2026, 8, 5), DateTime(2026, 8, 5)),
-        isTrue,
-      );
-      expect(
-        wednesday.isBetween(DateTime(2026, 8, 6), DateTime(2026, 8, 9)),
-        isFalse,
-      );
+      expect(wednesday.isBetween(DateTime(2026, 8, 5), DateTime(2026, 8, 5)), isTrue);
+      expect(wednesday.isBetween(DateTime(2026, 8, 6), DateTime(2026, 8, 9)), isFalse);
     });
   });
 }

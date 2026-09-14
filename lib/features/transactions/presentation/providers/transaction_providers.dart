@@ -40,16 +40,27 @@ class TransactionQueryNotifier extends Notifier<TransactionQuery> {
     _debounce?.cancel();
     _debounce = Timer(AppConstants.searchDebounce, () {
       state = state.copyWith(search: term).resetPage;
-      unawaited(
-        ref.read(preferencesServiceProvider).pushSearchTerm(term),
-      );
+      if (term.trim().length >= 2) {
+        unawaited(
+          ref.read(preferencesServiceProvider).pushSearchTerm(term).then((_) {
+            ref.invalidate(searchHistoryProvider);
+          }),
+        );
+      }
     });
   }
 
-  /// Bypasses the debounce — used when a search-history chip is tapped.
+  /// Bypasses the debounce — used when a search-history chip is tapped or form submitted.
   void searchNow(String term) {
     _debounce?.cancel();
     state = state.copyWith(search: term).resetPage;
+    if (term.trim().length >= 2) {
+      unawaited(
+        ref.read(preferencesServiceProvider).pushSearchTerm(term).then((_) {
+          ref.invalidate(searchHistoryProvider);
+        }),
+      );
+    }
   }
 
   void toggleType(TransactionType type) {
@@ -64,29 +75,21 @@ class TransactionQueryNotifier extends Notifier<TransactionQuery> {
     state = state.copyWith(categoryIds: next).resetPage;
   }
 
-  void setDateRange(DateTime? from, DateTime? to) =>
-      state = state.copyWith(from: from, to: to).resetPage;
+  void setDateRange(DateTime? from, DateTime? to) => state = state.copyWith(from: from, to: to).resetPage;
 
-  void setAmountRange(double? min, double? max) =>
-      state = state.copyWith(minAmount: min, maxAmount: max).resetPage;
+  void setAmountRange(double? min, double? max) => state = state.copyWith(minAmount: min, maxAmount: max).resetPage;
 
-  void setSort(TransactionSort sort) =>
-      state = state.copyWith(sort: sort).resetPage;
+  void setSort(TransactionSort sort) => state = state.copyWith(sort: sort).resetPage;
 
   /// Infinite scroll: bump the page, keep everything else.
   void loadMore() => state = state.copyWith(page: state.page + 1);
 
-  void clearFilters() =>
-      state = TransactionQuery(search: state.search, sort: state.sort);
+  void clearFilters() => state = TransactionQuery(search: state.search, sort: state.sort);
 
   void reset() => state = const TransactionQuery();
 }
 
-final transactionQueryProvider =
-    NotifierProvider<TransactionQueryNotifier, TransactionQuery>(
-      TransactionQueryNotifier.new,
-      name: 'transactionQuery',
-    );
+final transactionQueryProvider = NotifierProvider<TransactionQueryNotifier, TransactionQuery>(TransactionQueryNotifier.new, name: 'transactionQuery');
 
 // ── Reads ─────────────────────────────────────────────────────────────────────
 
@@ -95,12 +98,10 @@ final transactionQueryProvider =
 /// A `family` over the whole query object: because [TransactionQuery] is a
 /// Freezed value type, two callers passing equal filters share one Isar
 /// subscription instead of opening two.
-final transactionPageProvider =
-    StreamProvider.family<TransactionPage, TransactionQuery>(
-      (Ref ref, TransactionQuery query) =>
-          ref.watch(transactionRepositoryProvider).watchPage(query),
-      name: 'transactionPage',
-    );
+final transactionPageProvider = StreamProvider.family<TransactionPage, TransactionQuery>(
+  (Ref ref, TransactionQuery query) => ref.watch(transactionRepositoryProvider).watchPage(query),
+  name: 'transactionPage',
+);
 
 /// What the transactions screen renders: the results for the *current* query.
 final transactionsProvider = Provider<AsyncValue<TransactionPage>>((Ref ref) {
@@ -108,51 +109,34 @@ final transactionsProvider = Provider<AsyncValue<TransactionPage>>((Ref ref) {
   return ref.watch(transactionPageProvider(query));
 }, name: 'transactions');
 
-final transactionByIdProvider = FutureProvider.family<Transaction?, String>(
-  (Ref ref, String id) async {
-    final Result<Transaction?> result = await ref
-        .watch(transactionRepositoryProvider)
-        .getById(id);
-    return result.dataOrNull;
-  },
-  name: 'transactionById',
-);
+final transactionByIdProvider = FutureProvider.family<Transaction?, String>((Ref ref, String id) async {
+  final Result<Transaction?> result = await ref.watch(transactionRepositoryProvider).getById(id);
+  return result.dataOrNull;
+}, name: 'transactionById');
 
 /// A named date window, so summaries can be requested declaratively.
 typedef DateRange = ({DateTime from, DateTime to});
 
 final summaryProvider = StreamProvider.family<TransactionSummary, DateRange>(
-  (Ref ref, DateRange range) => ref
-      .watch(transactionRepositoryProvider)
-      .watchSummary(from: range.from, to: range.to),
+  (Ref ref, DateRange range) => ref.watch(transactionRepositoryProvider).watchSummary(from: range.from, to: range.to),
   name: 'summary',
 );
 
 /// Lifetime balance — the number on the dashboard's hero card.
-final lifetimeRange = (
-  from: DateTime(2000),
-  to: DateTime(2100),
-);
+final lifetimeRange = (from: DateTime(2000), to: DateTime(2100));
 
 final currentMonthRange = Provider<DateRange>((Ref ref) {
   final DateTime now = DateTime.now();
   return (from: now.startOfMonth, to: now.endOfMonth);
 }, name: 'currentMonthRange');
 
-final recentTransactionsProvider = Provider<AsyncValue<List<Transaction>>>((
-  Ref ref,
-) {
+final recentTransactionsProvider = Provider<AsyncValue<List<Transaction>>>((Ref ref) {
   const TransactionQuery query = TransactionQuery(pageSize: 5);
-  return ref
-      .watch(transactionPageProvider(query))
-      .whenData((TransactionPage page) => page.items);
+  return ref.watch(transactionPageProvider(query)).whenData((TransactionPage page) => page.items);
 }, name: 'recentTransactions');
 
 /// Persisted search history, exposed for the search screen's suggestion chips.
-final searchHistoryProvider = Provider<List<String>>(
-  (Ref ref) => ref.watch(preferencesServiceProvider).searchHistory,
-  name: 'searchHistory',
-);
+final searchHistoryProvider = Provider<List<String>>((Ref ref) => ref.watch(preferencesServiceProvider).searchHistory, name: 'searchHistory');
 
 // ── Writes ────────────────────────────────────────────────────────────────────
 
@@ -163,8 +147,7 @@ class TransactionController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  TransactionRepository get _repository =>
-      ref.read(transactionRepositoryProvider);
+  TransactionRepository get _repository => ref.read(transactionRepositoryProvider);
 
   /// Creates a transaction, generating the client-side id.
   ///
@@ -200,14 +183,12 @@ class TransactionController extends AsyncNotifier<void> {
 
   /// Named `edit` rather than `update` because `AsyncNotifier` already
   /// declares an `update` member with a different signature.
-  Future<Failure?> edit(Transaction transaction) =>
-      _execute(() => _repository.update(transaction));
+  Future<Failure?> edit(Transaction transaction) => _execute(() => _repository.update(transaction));
 
   Future<Failure?> delete(String id) => _execute(() => _repository.delete(id));
 
   /// Restores a row deleted within the undo window.
-  Future<Failure?> restore(String id) =>
-      _execute(() => _repository.restore(id));
+  Future<Failure?> restore(String id) => _execute(() => _repository.restore(id));
 
   Future<Failure?> _execute(Future<Result<Object?>> Function() action) async {
     state = const AsyncLoading<void>();
@@ -217,8 +198,4 @@ class TransactionController extends AsyncNotifier<void> {
   }
 }
 
-final transactionControllerProvider =
-    AsyncNotifierProvider<TransactionController, void>(
-      TransactionController.new,
-      name: 'transactionController',
-    );
+final transactionControllerProvider = AsyncNotifierProvider<TransactionController, void>(TransactionController.new, name: 'transactionController');

@@ -7,12 +7,7 @@ import 'package:intl/intl.dart';
 /// settings instantly and consistently affects every screen.
 extension NumX on num {
   /// `1234.5` → `$1,234.50`.
-  String toCurrency({
-    String currencyCode = 'USD',
-    String? symbol,
-    int decimalDigits = 2,
-    String? locale,
-  }) {
+  String toCurrency({String currencyCode = 'USD', String? symbol, int decimalDigits = 2, String? locale}) {
     final format = NumberFormat.currency(
       locale: locale,
       name: currencyCode,
@@ -31,8 +26,7 @@ extension NumX on num {
   }
 
   /// `0.4213` → `42%`.
-  String toPercent({int decimalDigits = 0}) =>
-      '${(this * 100).toStringAsFixed(decimalDigits)}%';
+  String toPercent({int decimalDigits = 0}) => '${(this * 100).toStringAsFixed(decimalDigits)}%';
 
   /// Prefixes an explicit sign — used for transaction amounts.
   String toSignedCurrency({String currencyCode = 'USD', String? symbol}) {
@@ -69,5 +63,6 @@ extension NumX on num {
     'KRW': '₩',
     'NGN': '₦',
     'PKR': '₨',
+    'MMK': 'K',
   };
 }

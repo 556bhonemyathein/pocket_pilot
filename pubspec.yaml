@@ -11,6 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
 
   # ── State management ────────────────────────────────────────────────────────
@@ -54,6 +56,7 @@ dependencies:
   pdf: ^3.12.0
   crypto: ^3.0.7
   collection: ^1.19.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

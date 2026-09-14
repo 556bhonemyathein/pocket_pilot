@@ -24,8 +24,7 @@ class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  ConsumerState<TransactionsScreen> createState() =>
-      _TransactionsScreenState();
+  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
 class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
@@ -49,9 +48,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   /// the user never actually sees a loading indicator during a normal scroll.
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    final double remaining =
-        _scrollController.position.maxScrollExtent -
-        _scrollController.position.pixels;
+    final double remaining = _scrollController.position.maxScrollExtent - _scrollController.position.pixels;
     if (remaining > 400) return;
 
     final AsyncValue<TransactionPage> page = ref.read(transactionsProvider);
@@ -62,9 +59,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   }
 
   Future<void> _delete(Transaction transaction) async {
-    final Failure? failure = await ref
-        .read(transactionControllerProvider.notifier)
-        .delete(transaction.id);
+    final Failure? failure = await ref.read(transactionControllerProvider.notifier).delete(transaction.id);
 
     if (!mounted) return;
     if (failure != null) {
@@ -78,9 +73,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       context,
       message: 'Transaction deleted',
       onUndo: () async {
-        final Failure? restoreFailure = await ref
-            .read(transactionControllerProvider.notifier)
-            .restore(transaction.id);
+        final Failure? restoreFailure = await ref.read(transactionControllerProvider.notifier).restore(transaction.id);
         if (restoreFailure != null && mounted) {
           AppFeedback.error(context, restoreFailure);
         }
@@ -106,23 +99,16 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               titleSpacing: AppSpacing.page,
               title: const Text('Activity'),
               actions: <Widget>[
-                IconButton(
-                  tooltip: 'Search',
-                  onPressed: () => context.goNamed(AppRoutes.search),
-                  icon: const Icon(Icons.search_rounded),
-                ),
+                IconButton(tooltip: 'Search', onPressed: () => context.goNamed(AppRoutes.search), icon: const Icon(Icons.search_rounded)),
                 _SortButton(current: query.sort),
                 _FilterButton(count: query.activeFilterCount),
                 AppSpacing.sm.gapW,
               ],
             ),
 
-            if (query.hasFilters)
+            if (query.hasFilters || query.search.isNotBlank)
               SliverToBoxAdapter(
-                child: _ActiveFilterBar(
-                  query: query,
-                  resultCount: page.value?.total ?? 0,
-                ),
+                child: _ActiveFilterBar(query: query, resultCount: page.value?.total ?? 0),
               ),
 
             ...page.when(
@@ -130,18 +116,13 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               loading: () => <Widget>[
                 const SliverPadding(
                   padding: EdgeInsets.all(AppSpacing.page),
-                  sliver: SliverToBoxAdapter(
-                    child: TransactionListSkeleton(itemCount: 8),
-                  ),
+                  sliver: SliverToBoxAdapter(child: TransactionListSkeleton(itemCount: 8)),
                 ),
               ],
               error: (Object error, _) => <Widget>[
                 SliverFillRemaining(
                   hasScrollBody: false,
-                  child: AppErrorState(
-                    failure: FailureMapper.from(error),
-                    onRetry: () => ref.invalidate(transactionPageProvider),
-                  ),
+                  child: AppErrorState(failure: FailureMapper.from(error), onRetry: () => ref.invalidate(transactionPageProvider)),
                 ),
               ],
             ),
@@ -153,21 +134,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
   List<Widget> _buildList(TransactionPage data) {
     if (data.items.isEmpty) {
-      final bool filtered =
-          ref.read(transactionQueryProvider).hasFilters ||
-          ref.read(transactionQueryProvider).search.isNotBlank;
+      final bool filtered = ref.read(transactionQueryProvider).hasFilters || ref.read(transactionQueryProvider).search.isNotBlank;
 
       return <Widget>[
         SliverFillRemaining(
           hasScrollBody: false,
           child: AppEmptyState(
-            icon: filtered
-                ? Icons.filter_alt_off_outlined
-                : Icons.receipt_long_outlined,
+            icon: filtered ? Icons.filter_alt_off_outlined : Icons.receipt_long_outlined,
             title: filtered ? 'No matches' : 'Nothing here yet',
-            message: filtered
-                ? 'Try widening your filters or clearing the search.'
-                : 'Add your first transaction to get started.',
+            message: filtered ? 'Try widening your filters or clearing the search.' : 'Add your first transaction to get started.',
             actionLabel: filtered ? 'Clear filters' : 'Add transaction',
             onAction: filtered
                 ? () => ref.read(transactionQueryProvider.notifier).reset()
@@ -181,35 +156,19 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     }
 
     // Group by calendar day so the list reads as a diary rather than a dump.
-    final Map<DateTime, List<Transaction>> grouped =
-        groupBy<Transaction, DateTime>(
-          data.items,
-          (Transaction t) => t.date.dateOnly,
-        );
-    final List<DateTime> days = grouped.keys.toList()
-      ..sort((DateTime a, DateTime b) => b.compareTo(a));
+    final Map<DateTime, List<Transaction>> grouped = groupBy<Transaction, DateTime>(data.items, (Transaction t) => t.date.dateOnly);
+    final List<DateTime> days = grouped.keys.toList()..sort((DateTime a, DateTime b) => b.compareTo(a));
 
     return <Widget>[
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.page,
-          AppSpacing.sm,
-          AppSpacing.page,
-          120,
-        ),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.sm, AppSpacing.page, 120),
         sliver: SliverList.builder(
           itemCount: days.length + (data.hasMore ? 1 : 0),
           itemBuilder: (BuildContext context, int index) {
             if (index >= days.length) {
               return const Padding(
                 padding: EdgeInsets.all(AppSpacing.xl),
-                child: Center(
-                  child: SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.4),
-                  ),
-                ),
+                child: Center(child: SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
               );
             }
 
@@ -220,43 +179,22 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.sm,
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.lg, AppSpacing.sm, AppSpacing.sm),
                   child: Row(
                     children: <Widget>[
-                      Text(
-                        day.relativeLabel,
-                        style: context.text.labelLarge?.copyWith(
-                          color: context.colors.onSurfaceVariant,
-                        ),
-                      ),
+                      Text(day.relativeLabel, style: context.text.labelLarge?.copyWith(color: context.colors.onSurfaceVariant)),
                       const Spacer(),
-                      Text(
-                        _dayTotal(items),
-                        style: context.text.labelMedium?.copyWith(
-                          color: context.colors.onSurfaceVariant,
-                        ),
-                      ),
+                      Text(_dayTotal(items), style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant)),
                     ],
                   ),
                 ),
                 AppCard(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
                   child: Column(
                     children: <Widget>[
                       for (int i = 0; i < items.length; i++) ...<Widget>[
                         if (i > 0) const Divider(height: 1),
-                        _SwipeableTile(
-                          transaction: items[i],
-                          onDelete: () => _delete(items[i]),
-                        ),
+                        _SwipeableTile(transaction: items[i], onDelete: () => _delete(items[i])),
                       ],
                     ],
                   ),
@@ -270,10 +208,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   }
 
   String _dayTotal(List<Transaction> items) {
-    final double net = items.fold<double>(
-      0,
-      (double sum, Transaction t) => sum + t.signedAmount,
-    );
+    final double net = items.fold<double>(0, (double sum, Transaction t) => sum + t.signedAmount);
     return net.toSignedCurrency(currencyCode: items.first.currencyCode);
   }
 }
@@ -291,28 +226,17 @@ class _SwipeableTile extends StatelessWidget {
       key: ValueKey<String>(transaction.id),
       direction: DismissDirection.endToStart,
       // A generous threshold prevents accidental deletes during a fast scroll.
-      dismissThresholds: const <DismissDirection, double>{
-        DismissDirection.endToStart: 0.45,
-      },
+      dismissThresholds: const <DismissDirection, double>{DismissDirection.endToStart: 0.45},
       onDismissed: (_) => onDelete(),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.xl),
-        decoration: BoxDecoration(
-          color: context.colors.errorContainer,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Icon(
-          Icons.delete_outline_rounded,
-          color: context.colors.onErrorContainer,
-        ),
+        decoration: BoxDecoration(color: context.colors.errorContainer, borderRadius: BorderRadius.circular(AppRadius.sm)),
+        child: Icon(Icons.delete_outline_rounded, color: context.colors.onErrorContainer),
       ),
       child: TransactionTile(
         transaction: transaction,
-        onTap: () => context.go(
-          '${AppRoutes.transactions}/${AppRoutes.transactionForm}',
-          extra: transaction,
-        ),
+        onTap: () => context.go('${AppRoutes.transactions}/${AppRoutes.transactionForm}', extra: transaction),
       ),
     );
   }
@@ -329,14 +253,9 @@ class _SortButton extends ConsumerWidget {
       tooltip: 'Sort',
       icon: const Icon(Icons.swap_vert_rounded),
       initialValue: current,
-      onSelected: (TransactionSort sort) =>
-          ref.read(transactionQueryProvider.notifier).setSort(sort),
+      onSelected: (TransactionSort sort) => ref.read(transactionQueryProvider.notifier).setSort(sort),
       itemBuilder: (BuildContext context) => <PopupMenuEntry<TransactionSort>>[
-        for (final TransactionSort sort in TransactionSort.values)
-          PopupMenuItem<TransactionSort>(
-            value: sort,
-            child: Text(sort.label),
-          ),
+        for (final TransactionSort sort in TransactionSort.values) PopupMenuItem<TransactionSort>(value: sort, child: Text(sort.label)),
       ],
     );
   }
@@ -351,15 +270,8 @@ class _FilterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: 'Filter',
-      onPressed: () => AppFeedback.sheet<void>(
-        context,
-        child: const TransactionFilterSheet(),
-      ),
-      icon: Badge(
-        isLabelVisible: count > 0,
-        label: Text('$count'),
-        child: const Icon(Icons.tune_rounded),
-      ),
+      onPressed: () => AppFeedback.sheet<void>(context, child: const TransactionFilterSheet()),
+      icon: Badge(isLabelVisible: count > 0, label: Text('$count'), child: const Icon(Icons.tune_rounded)),
     );
   }
 }
@@ -373,23 +285,29 @@ class _ActiveFilterBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final String label = query.search.isNotBlank
+        ? 'Search: "${query.search}" · $resultCount result${resultCount == 1 ? '' : 's'}'
+        : '$resultCount result${resultCount == 1 ? '' : 's'}';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
       child: Row(
         children: <Widget>[
           Expanded(
             child: Text(
-              '$resultCount result${resultCount == 1 ? '' : 's'}',
-              style: context.text.labelMedium?.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant),
             ),
           ),
           TextButton.icon(
-            onPressed: () =>
-                ref.read(transactionQueryProvider.notifier).clearFilters(),
+            onPressed: () {
+              ref.read(transactionQueryProvider.notifier).clearFilters();
+              ref.read(transactionQueryProvider.notifier).searchNow('');
+            },
             icon: const Icon(Icons.close_rounded, size: 16),
-            label: const Text('Clear filters'),
+            label: const Text('Clear all'),
           ),
         ],
       ),

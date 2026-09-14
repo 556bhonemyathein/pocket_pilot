@@ -17,55 +17,50 @@ class PreferencesService {
 
   final SharedPreferences _prefs;
 
-  static Future<PreferencesService> create() async =>
-      PreferencesService(await SharedPreferences.getInstance());
+  static const Set<String> _supportedLanguageCodes = <String>{'en', 'es', 'fr', 'de', 'id', 'ar'};
+
+  static Future<PreferencesService> create() async => PreferencesService(await SharedPreferences.getInstance());
 
   // ── Onboarding / session ────────────────────────────────────────────────────
 
   bool get onboardingSeen => _prefs.getBool(StorageKeys.onboardingSeen) ?? false;
 
-  Future<void> setOnboardingSeen({required bool value}) =>
-      _prefs.setBool(StorageKeys.onboardingSeen, value);
+  Future<void> setOnboardingSeen({required bool value}) => _prefs.setBool(StorageKeys.onboardingSeen, value);
 
   bool get rememberMe => _prefs.getBool(StorageKeys.rememberMe) ?? true;
 
-  Future<void> setRememberMe({required bool value}) =>
-      _prefs.setBool(StorageKeys.rememberMe, value);
+  Future<void> setRememberMe({required bool value}) => _prefs.setBool(StorageKeys.rememberMe, value);
 
   // ── Appearance ──────────────────────────────────────────────────────────────
 
   ThemeMode get themeMode {
     final String? raw = _prefs.getString(StorageKeys.themeMode);
-    return ThemeMode.values.firstWhere(
-      (ThemeMode m) => m.name == raw,
-      orElse: () => ThemeMode.system,
-    );
+    return ThemeMode.values.firstWhere((ThemeMode m) => m.name == raw, orElse: () => ThemeMode.system);
   }
 
-  Future<void> setThemeMode(ThemeMode mode) =>
-      _prefs.setString(StorageKeys.themeMode, mode.name);
+  Future<void> setThemeMode(ThemeMode mode) => _prefs.setString(StorageKeys.themeMode, mode.name);
 
-  String get languageCode => _prefs.getString(StorageKeys.locale) ?? 'en';
+  String get languageCode {
+    final String code = _prefs.getString(StorageKeys.locale) ?? 'en';
+    return _supportedLanguageCodes.contains(code) ? code : 'en';
+  }
 
-  Future<void> setLanguageCode(String code) =>
-      _prefs.setString(StorageKeys.locale, code);
+  Future<void> setLanguageCode(String code) async {
+    final String normalized = _supportedLanguageCodes.contains(code) ? code : 'en';
+    await _prefs.setString(StorageKeys.locale, normalized);
+  }
 
-  String get currencyCode =>
-      _prefs.getString(StorageKeys.currencyCode) ?? 'USD';
+  String get currencyCode => _prefs.getString(StorageKeys.currencyCode) ?? 'USD';
 
-  Future<void> setCurrencyCode(String code) =>
-      _prefs.setString(StorageKeys.currencyCode, code);
+  Future<void> setCurrencyCode(String code) => _prefs.setString(StorageKeys.currencyCode, code);
 
-  bool get notificationsEnabled =>
-      _prefs.getBool(StorageKeys.notificationsEnabled) ?? true;
+  bool get notificationsEnabled => _prefs.getBool(StorageKeys.notificationsEnabled) ?? true;
 
-  Future<void> setNotificationsEnabled({required bool value}) =>
-      _prefs.setBool(StorageKeys.notificationsEnabled, value);
+  Future<void> setNotificationsEnabled({required bool value}) => _prefs.setBool(StorageKeys.notificationsEnabled, value);
 
   // ── Search history ──────────────────────────────────────────────────────────
 
-  List<String> get searchHistory =>
-      _prefs.getStringList(StorageKeys.searchHistory) ?? const <String>[];
+  List<String> get searchHistory => _prefs.getStringList(StorageKeys.searchHistory) ?? const <String>[];
 
   /// Most-recent-first, de-duplicated, capped. Keeping the trimming logic here
   /// means the search UI never has to think about it.
@@ -74,15 +69,12 @@ class PreferencesService {
     if (trimmed.isEmpty) return;
     final List<String> history = <String>[
       trimmed,
-      ...searchHistory.where(
-        (String t) => t.toLowerCase() != trimmed.toLowerCase(),
-      ),
+      ...searchHistory.where((String t) => t.toLowerCase() != trimmed.toLowerCase()),
     ].take(AppConstants.searchHistoryLimit).toList();
     await _prefs.setStringList(StorageKeys.searchHistory, history);
   }
 
-  Future<void> clearSearchHistory() =>
-      _prefs.remove(StorageKeys.searchHistory);
+  Future<void> clearSearchHistory() => _prefs.remove(StorageKeys.searchHistory);
 
   // ── Sync bookkeeping ────────────────────────────────────────────────────────
 
@@ -91,8 +83,7 @@ class PreferencesService {
     return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
   }
 
-  Future<void> setLastSyncAt(DateTime value) =>
-      _prefs.setInt(StorageKeys.lastSyncAt, value.millisecondsSinceEpoch);
+  Future<void> setLastSyncAt(DateTime value) => _prefs.setInt(StorageKeys.lastSyncAt, value.millisecondsSinceEpoch);
 
   // ── Backup / restore ────────────────────────────────────────────────────────
 
@@ -107,8 +98,7 @@ class PreferencesService {
   });
 
   Future<void> importJson(String raw) async {
-    final Map<String, dynamic> map =
-        jsonDecode(raw) as Map<String, dynamic>;
+    final Map<String, dynamic> map = jsonDecode(raw) as Map<String, dynamic>;
     for (final MapEntry<String, dynamic> entry in map.entries) {
       final Object? value = entry.value;
       if (value is bool) {

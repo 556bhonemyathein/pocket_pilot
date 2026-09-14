@@ -27,6 +27,7 @@ abstract class Transaction with _$Transaction {
     String? receiptPath,
     @Default(<String>[]) List<String> attachments,
     @Default(RecurrenceRule.none) RecurrenceRule recurrence,
+
     /// For transfers: the destination pot/account label.
     String? transferTo,
     DateTime? createdAt,
@@ -36,8 +37,7 @@ abstract class Transaction with _$Transaction {
 
   const Transaction._();
 
-  factory Transaction.fromJson(Map<String, dynamic> json) =>
-      _$TransactionFromJson(json);
+  factory Transaction.fromJson(Map<String, dynamic> json) => _$TransactionFromJson(json);
 
   /// Amount signed by type — the single definition of "effect on balance".
   double get signedAmount => amount.abs() * type.sign;
@@ -47,6 +47,5 @@ abstract class Transaction with _$Transaction {
   bool get hasAttachments => receiptPath != null || attachments.isNotEmpty;
 
   /// Free-text haystack used by realtime search.
-  String get searchHaystack =>
-      '$note ${tags.join(' ')} ${transferTo ?? ''}'.toLowerCase();
+  String get searchHaystack => '$note ${tags.join(' ')} ${transferTo ?? ''} $amount ${amount.toStringAsFixed(2)} ${type.name}'.toLowerCase();
 }

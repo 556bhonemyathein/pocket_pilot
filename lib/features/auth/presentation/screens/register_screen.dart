@@ -1,7 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/errors/failure.dart';
 import '../../../../core/extensions/extensions.dart';
 import '../../../../core/theme/app_dimens.dart';
@@ -48,11 +51,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     final Failure? failure = await ref
         .read(authProvider.notifier)
-        .register(
-          name: _name.text.trim(),
-          email: _email.text.trim(),
-          password: _password.text,
-        );
+        .register(name: _name.text.trim(), email: _email.text.trim(), password: _password.text);
 
     if (!mounted) return;
     setState(() {
@@ -80,12 +79,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      'Start tracking in under a minute.',
-                      style: context.text.bodyMedium?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                      ),
-                    ),
+                    Text('Start tracking in under a minute.', style: context.text.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant)),
                     AppSpacing.xxl.gapH,
 
                     AppTextField(
@@ -96,10 +90,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       textInputAction: TextInputAction.next,
                       autofillHints: const <String>[AutofillHints.name],
                       errorText: _fieldErrors['name']?.firstOrNull,
-                      validator: (String? value) =>
-                          (value ?? '').trim().length >= 2
-                          ? null
-                          : 'Enter your name',
+                      validator: (String? value) => (value ?? '').trim().length >= 2 ? null : 'Enter your name',
                     ),
                     AppSpacing.lg.gapH,
 
@@ -112,10 +103,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       textInputAction: TextInputAction.next,
                       autofillHints: const <String>[AutofillHints.email],
                       errorText: _fieldErrors['email']?.firstOrNull,
-                      validator: (String? value) =>
-                          (value ?? '').isValidEmail
-                          ? null
-                          : 'Enter a valid email address',
+                      validator: (String? value) => (value ?? '').isValidEmail ? null : 'Enter a valid email address',
                     ),
                     AppSpacing.lg.gapH,
 
@@ -126,15 +114,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       prefixIcon: Icons.lock_outline_rounded,
                       obscureText: true,
                       textInputAction: TextInputAction.next,
-                      autofillHints: const <String>[
-                        AutofillHints.newPassword,
-                      ],
+                      autofillHints: const <String>[AutofillHints.newPassword],
                       errorText: _fieldErrors['password']?.firstOrNull,
                       onChanged: (_) => setState(() {}),
-                      validator: (String? value) =>
-                          (value ?? '').isStrongPassword
-                          ? null
-                          : 'Use 8+ characters with a letter and a number',
+                      validator: (String? value) => (value ?? '').isStrongPassword ? null : 'Use 8+ characters with a letter and a number',
                     ),
                     AppSpacing.sm.gapH,
                     _PasswordStrength(password: _password.text),
@@ -147,24 +130,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _submit(),
-                      validator: (String? value) => value == _password.text
-                          ? null
-                          : 'Passwords do not match',
+                      validator: (String? value) => value == _password.text ? null : 'Passwords do not match',
                     ),
                     AppSpacing.xxl.gapH,
 
-                    AppButton(
-                      label: 'Create account',
-                      isLoading: _submitting,
-                      onPressed: _submit,
-                    ),
+                    AppButton(label: 'Create account', isLoading: _submitting, onPressed: _submit),
                     AppSpacing.lg.gapH,
-                    Text(
-                      'By continuing you agree to our Terms and Privacy Policy.',
-                      textAlign: TextAlign.center,
-                      style: context.text.labelSmall?.copyWith(
-                        color: context.colors.onSurfaceVariant,
+                    Text.rich(
+                      TextSpan(
+                        text: 'By continuing you agree to our Terms and ',
+                        style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant),
+                        children: <InlineSpan>[
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: TextStyle(color: context.colors.primary, decoration: TextDecoration.underline),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                final Uri uri = Uri.parse(AppConstants.privacyPolicyUrl);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -191,8 +182,7 @@ class _PasswordStrength extends StatelessWidget {
     var score = 0;
     if (password.length >= 8) score++;
     if (password.length >= 12) score++;
-    if (RegExp(r'[A-Z]').hasMatch(password) &&
-        RegExp(r'[a-z]').hasMatch(password)) {
+    if (RegExp(r'[A-Z]').hasMatch(password) && RegExp(r'[a-z]').hasMatch(password)) {
       score++;
     }
     if (RegExp(r'\d').hasMatch(password)) score++;
@@ -220,20 +210,12 @@ class _PasswordStrength extends StatelessWidget {
               duration: 250.ms,
               tween: Tween<double>(begin: 0, end: score / 5),
               builder: (BuildContext context, double value, _) =>
-                  LinearProgressIndicator(
-                    value: value,
-                    minHeight: 5,
-                    color: color,
-                    backgroundColor: context.colors.outlineVariant,
-                  ),
+                  LinearProgressIndicator(value: value, minHeight: 5, color: color, backgroundColor: context.colors.outlineVariant),
             ),
           ),
         ),
         AppSpacing.md.gapW,
-        Text(
-          label,
-          style: context.text.labelSmall?.copyWith(color: color),
-        ),
+        Text(label, style: context.text.labelSmall?.copyWith(color: color)),
       ],
     );
   }

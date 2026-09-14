@@ -26,6 +26,6 @@ abstract final class AppConstants {
   /// Number of automatic retries for idempotent network calls.
   static const int maxNetworkRetries = 3;
 
-  static const String privacyPolicyUrl = 'https://pocketpilot.app/privacy';
+  static const String privacyPolicyUrl = 'https://github.com/556bhonemyathein/-Privacy-Policy-url';
   static const String supportEmail = 'support@pocketpilot.app';
 }

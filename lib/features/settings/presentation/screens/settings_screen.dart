@@ -5,13 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../../core/config/app_routes.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/extensions/extensions.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/glass_panel.dart';
+import '../../../../shared/providers/core_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profile/presentation/widgets/currency_picker.dart';
 
 import '../providers/settings_providers.dart';
 
@@ -40,26 +45,12 @@ class SettingsScreen extends ConsumerWidget {
                 AppSpacing.md.gapH,
                 SegmentedButton<ThemeMode>(
                   segments: const <ButtonSegment<ThemeMode>>[
-                    ButtonSegment<ThemeMode>(
-                      value: ThemeMode.light,
-                      icon: Icon(Icons.light_mode_outlined),
-                      label: Text('Light'),
-                    ),
-                    ButtonSegment<ThemeMode>(
-                      value: ThemeMode.system,
-                      icon: Icon(Icons.brightness_auto_outlined),
-                      label: Text('System'),
-                    ),
-                    ButtonSegment<ThemeMode>(
-                      value: ThemeMode.dark,
-                      icon: Icon(Icons.dark_mode_outlined),
-                      label: Text('Dark'),
-                    ),
+                    ButtonSegment<ThemeMode>(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Text('Light')),
+                    ButtonSegment<ThemeMode>(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_outlined), label: Text('System')),
+                    ButtonSegment<ThemeMode>(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Text('Dark')),
                   ],
                   selected: <ThemeMode>{themeMode},
-                  onSelectionChanged: (Set<ThemeMode> selection) => ref
-                      .read(persistedThemeModeProvider.notifier)
-                      .setMode(selection.first),
+                  onSelectionChanged: (Set<ThemeMode> selection) => ref.read(persistedThemeModeProvider.notifier).setMode(selection.first),
                 ),
               ],
             ),
@@ -76,11 +67,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Language'),
                   subtitle: Text(
                     kSupportedLanguages
-                        .firstWhere(
-                          (({String code, String label}) l) =>
-                              l.code == language,
-                          orElse: () => kSupportedLanguages.first,
-                        )
+                        .firstWhere((({String code, String label}) l) => l.code == language, orElse: () => kSupportedLanguages.first)
                         .label,
                   ),
                   trailing: const Icon(Icons.chevron_right_rounded, size: 20),
@@ -94,9 +81,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Notifications'),
                   subtitle: const Text('Budget alerts and sync updates'),
                   value: notifications,
-                  onChanged: (bool value) => ref
-                      .read(notificationsEnabledProvider.notifier)
-                      .setEnabled(enabled: value),
+                  onChanged: (bool value) => ref.read(notificationsEnabledProvider.notifier).setEnabled(enabled: value),
                 ),
               ],
             ),
@@ -106,13 +91,7 @@ class SettingsScreen extends ConsumerWidget {
           const _SectionTitle('Data'),
           const AppCard(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
-            child: Column(
-              children: <Widget>[
-                _BackupTile(),
-                Divider(height: 1),
-                _RestoreTile(),
-              ],
-            ),
+            child: Column(children: <Widget>[_BackupTile(), Divider(height: 1), _RestoreTile()]),
           ),
           AppSpacing.xl.gapH,
 
@@ -132,10 +111,14 @@ class SettingsScreen extends ConsumerWidget {
                   leading: const Icon(Icons.privacy_tip_outlined),
                   title: const Text('Privacy policy'),
                   trailing: const Icon(Icons.open_in_new_rounded, size: 16),
-                  onTap: () => AppFeedback.info(
-                    context,
-                    'Opens pocketpilot.app/privacy in your browser',
-                  ),
+                  onTap: () async {
+                    final Uri uri = Uri.parse(AppConstants.privacyPolicyUrl);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } else if (context.mounted) {
+                      AppFeedback.warning(context, 'Could not open privacy policy URL');
+                    }
+                  },
                 ),
               ],
             ),
@@ -150,27 +133,17 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickLanguage(
-    BuildContext context,
-    WidgetRef ref,
-    String current,
-  ) async {
+  Future<void> _pickLanguage(BuildContext context, WidgetRef ref, String current) async {
     final String? picked = await AppFeedback.sheet<String>(
       context,
       child: AppBottomSheet(
         title: 'Language',
         child: Column(
           children: <Widget>[
-            for (final ({String code, String label}) language
-                in kSupportedLanguages)
+            for (final ({String code, String label}) language in kSupportedLanguages)
               ListTile(
                 title: Text(language.label),
-                trailing: language.code == current
-                    ? Icon(
-                        Icons.check_circle_rounded,
-                        color: context.colors.primary,
-                      )
-                    : null,
+                trailing: language.code == current ? Icon(Icons.check_circle_rounded, color: context.colors.primary) : null,
                 onTap: () => Navigator.of(context).pop(language.code),
               ),
           ],
@@ -196,12 +169,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Text(
-        text,
-        style: context.text.labelLarge?.copyWith(
-          color: context.colors.onSurfaceVariant,
-        ),
-      ),
+      child: Text(text, style: context.text.labelLarge?.copyWith(color: context.colors.onSurfaceVariant)),
     );
   }
 }
@@ -212,13 +180,30 @@ class _CurrencyTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final String currency = ref.watch(currencyCodeProvider);
+    final ({String code, String name}) current = kSupportedCurrencies.firstWhere(
+      (({String code, String name}) c) => c.code == currency,
+      orElse: () => (code: currency, name: currency),
+    );
 
     return ListTile(
       leading: const Icon(Icons.payments_outlined),
       title: const Text('Currency'),
-      subtitle: Text(currency),
+      subtitle: Text('${current.code} · ${current.name}'),
       trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-      onTap: () => context.pushNamed(AppRoutes.editProfile),
+      onTap: () async {
+        final String? picked = await AppFeedback.sheet<String>(context, child: CurrencySheet(selected: currency));
+        if (picked != null) {
+          final user = ref.read(currentUserProvider);
+          if (user != null) {
+            await ref.read(authProvider.notifier).updateProfile(user.copyWith(currencyCode: picked));
+          }
+          await ref.read(preferencesServiceProvider).setCurrencyCode(picked);
+          ref.invalidate(currencyCodeProvider);
+          if (context.mounted) {
+            AppFeedback.info(context, 'Currency updated to $picked');
+          }
+        }
+      },
     );
   }
 }
@@ -241,12 +226,7 @@ class _BackupTileState extends ConsumerState<_BackupTile> {
 
     await result.when(
       success: (File file) async {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: <XFile>[XFile(file.path)],
-            text: 'PocketPilot backup',
-          ),
-        );
+        await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)], text: 'PocketPilot backup'));
       },
       failure: (failure) async => AppFeedback.error(context, failure),
     );
@@ -259,11 +239,7 @@ class _BackupTileState extends ConsumerState<_BackupTile> {
       title: const Text('Back up data'),
       subtitle: const Text('Export everything as a JSON file'),
       trailing: _busy
-          ? const SizedBox(
-              height: 18,
-              width: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
           : const Icon(Icons.chevron_right_rounded, size: 20),
       onTap: _busy ? null : _backup,
     );
@@ -293,16 +269,10 @@ class _RestoreTileState extends ConsumerState<_RestoreTile> {
             Text(
               'Paste the contents of a PocketPilot backup file. Existing '
               'transactions with the same id are overwritten.',
-              style: context.text.bodySmall?.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
+              style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
             ),
             AppSpacing.lg.gapH,
-            AppTextField(
-              controller: controller,
-              hint: '{"version": 1, …}',
-              maxLines: 6,
-            ),
+            AppTextField(controller: controller, hint: '{"version": 1, …}', maxLines: 6),
           ],
         ),
       ),
@@ -310,15 +280,12 @@ class _RestoreTileState extends ConsumerState<_RestoreTile> {
 
     if (confirmed != true || !mounted) return;
 
-    final result = await ref
-        .read(backupServiceProvider)
-        .restore(controller.text);
+    final result = await ref.read(backupServiceProvider).restore(controller.text);
     controller.dispose();
 
     if (!mounted) return;
     result.when(
-      success: (int count) =>
-          AppFeedback.success(context, 'Restored $count transactions'),
+      success: (int count) => AppFeedback.success(context, 'Restored $count transactions'),
       failure: (failure) => AppFeedback.error(context, failure),
     );
   }
@@ -343,14 +310,8 @@ class _DeleteAccountTile extends ConsumerWidget {
     return AppCard(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: ListTile(
-        leading: Icon(
-          Icons.delete_forever_outlined,
-          color: context.colors.error,
-        ),
-        title: Text(
-          'Delete account',
-          style: TextStyle(color: context.colors.error),
-        ),
+        leading: Icon(Icons.delete_forever_outlined, color: context.colors.error),
+        title: Text('Delete account', style: TextStyle(color: context.colors.error)),
         subtitle: const Text('Permanently removes your account and data'),
         onTap: () async {
           final bool confirmed = await AppFeedback.confirm(

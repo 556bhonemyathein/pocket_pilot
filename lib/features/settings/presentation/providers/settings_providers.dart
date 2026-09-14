@@ -26,11 +26,10 @@ class PersistedThemeModeNotifier extends Notifier<ThemeMode> {
   }
 }
 
-final persistedThemeModeProvider =
-    NotifierProvider<PersistedThemeModeNotifier, ThemeMode>(
-      PersistedThemeModeNotifier.new,
-      name: 'persistedThemeMode',
-    );
+final persistedThemeModeProvider = NotifierProvider<PersistedThemeModeNotifier, ThemeMode>(
+  PersistedThemeModeNotifier.new,
+  name: 'persistedThemeMode',
+);
 
 /// Selected app language.
 class LanguageNotifier extends Notifier<String> {
@@ -43,21 +42,18 @@ class LanguageNotifier extends Notifier<String> {
   }
 }
 
-final languageProvider = NotifierProvider<LanguageNotifier, String>(
-  LanguageNotifier.new,
-  name: 'language',
-);
+final languageProvider = NotifierProvider<LanguageNotifier, String>(LanguageNotifier.new, name: 'language');
 
 /// Languages the app ships translations for.
-const List<({String code, String label})> kSupportedLanguages =
-    <({String code, String label})>[
-      (code: 'en', label: 'English'),
-      (code: 'es', label: 'Español'),
-      (code: 'fr', label: 'Français'),
-      (code: 'de', label: 'Deutsch'),
-      (code: 'id', label: 'Bahasa Indonesia'),
-      (code: 'ar', label: 'العربية'),
-    ];
+const List<({String code, String label})> kSupportedLanguages = <({String code, String label})>[
+  (code: 'en', label: 'English'),
+  (code: 'es', label: 'Español'),
+  (code: 'fr', label: 'Français'),
+  (code: 'de', label: 'Deutsch'),
+  (code: 'id', label: 'Bahasa Indonesia'),
+  (code: 'ar', label: 'العربية'),
+  (code: 'my', label: 'မြန်မာ (Myanmar)'),
+];
 
 /// Notification preference.
 class NotificationsNotifier extends Notifier<bool> {
@@ -66,17 +62,11 @@ class NotificationsNotifier extends Notifier<bool> {
 
   Future<void> setEnabled({required bool enabled}) async {
     state = enabled;
-    await ref
-        .read(preferencesServiceProvider)
-        .setNotificationsEnabled(value: enabled);
+    await ref.read(preferencesServiceProvider).setNotificationsEnabled(value: enabled);
   }
 }
 
-final notificationsEnabledProvider =
-    NotifierProvider<NotificationsNotifier, bool>(
-      NotificationsNotifier.new,
-      name: 'notificationsEnabled',
-    );
+final notificationsEnabledProvider = NotifierProvider<NotificationsNotifier, bool>(NotificationsNotifier.new, name: 'notificationsEnabled');
 
 /// Backup and restore.
 ///
@@ -92,20 +82,14 @@ class BackupService {
   static const int formatVersion = 1;
 
   Future<Result<File>> export() => guard(() async {
-    final result = await _ref
-        .read(transactionRepositoryProvider)
-        .exportAll();
+    final result = await _ref.read(transactionRepositoryProvider).exportAll();
     final List<Transaction> transactions = result.getOrThrow();
 
     final Map<String, Object?> payload = <String, Object?>{
       'version': formatVersion,
       'exportedAt': DateTime.now().toIso8601String(),
-      'preferences': jsonDecode(
-        _ref.read(preferencesServiceProvider).exportJson(),
-      ),
-      'transactions': transactions
-          .map((Transaction t) => t.toJson())
-          .toList(),
+      'preferences': jsonDecode(_ref.read(preferencesServiceProvider).exportJson()),
+      'transactions': transactions.map((Transaction t) => t.toJson()).toList(),
     };
 
     final Directory directory = await getTemporaryDirectory();
@@ -118,40 +102,24 @@ class BackupService {
   });
 
   Future<Result<int>> restore(String raw) => guard(() async {
-    final Map<String, dynamic> payload =
-        jsonDecode(raw) as Map<String, dynamic>;
+    final Map<String, dynamic> payload = jsonDecode(raw) as Map<String, dynamic>;
 
     final int version = payload['version'] as int? ?? 0;
     if (version > formatVersion) {
-      throw const ValidationFailure(
-        'This backup was made by a newer version of PocketPilot',
-      );
+      throw const ValidationFailure('This backup was made by a newer version of PocketPilot');
     }
 
     final preferences = payload['preferences'];
     if (preferences != null) {
-      await _ref
-          .read(preferencesServiceProvider)
-          .importJson(jsonEncode(preferences));
+      await _ref.read(preferencesServiceProvider).importJson(jsonEncode(preferences));
     }
 
-    final List<dynamic> rows =
-        payload['transactions'] as List<dynamic>? ?? const <dynamic>[];
-    final List<Transaction> transactions = rows
-        .map(
-          (dynamic row) =>
-              Transaction.fromJson(row as Map<String, dynamic>),
-        )
-        .toList();
+    final List<dynamic> rows = payload['transactions'] as List<dynamic>? ?? const <dynamic>[];
+    final List<Transaction> transactions = rows.map((dynamic row) => Transaction.fromJson(row as Map<String, dynamic>)).toList();
 
-    final imported = await _ref
-        .read(transactionRepositoryProvider)
-        .importAll(transactions);
+    final imported = await _ref.read(transactionRepositoryProvider).importAll(transactions);
     return imported.getOrThrow();
   });
 }
 
-final backupServiceProvider = Provider<BackupService>(
-  BackupService.new,
-  name: 'backupService',
-);
+final backupServiceProvider = Provider<BackupService>(BackupService.new, name: 'backupService');
