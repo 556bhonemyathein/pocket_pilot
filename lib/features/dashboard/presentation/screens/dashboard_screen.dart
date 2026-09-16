@@ -8,6 +8,8 @@ import '../../../../core/extensions/extensions.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/widgets/app_state_views.dart';
 import '../../../../core/widgets/glass_panel.dart';
+import '../../../../core/widgets/user_avatar.dart';
+import '../../../../shared/models/app_user.dart';
 import '../../../../shared/models/enums.dart';
 import '../../../../shared/models/transaction.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -31,12 +33,8 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final String currency = ref.watch(currencyCodeProvider);
-    final AsyncValue<TransactionSummary> lifetime = ref.watch(
-      lifetimeSummaryProvider,
-    );
-    final AsyncValue<TransactionSummary> month = ref.watch(
-      monthSummaryProvider,
-    );
+    final AsyncValue<TransactionSummary> lifetime = ref.watch(lifetimeSummaryProvider);
+    final AsyncValue<TransactionSummary> month = ref.watch(monthSummaryProvider);
     final double budget = ref.watch(monthlyBudgetProvider);
 
     return RefreshIndicator(
@@ -51,24 +49,14 @@ class DashboardScreen extends ConsumerWidget {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  ref.watch(greetingProvider),
-                  style: context.text.titleMedium,
-                ),
-                Text(
-                  DateTime.now().formatted,
-                  style: context.text.labelSmall?.copyWith(
-                    color: context.colors.onSurfaceVariant,
-                  ),
-                ),
+                Text(ref.watch(greetingProvider), style: context.text.titleMedium),
+                Text(DateTime.now().formatted, style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant)),
               ],
             ),
             actions: <Widget>[
               IconButton(
                 tooltip: 'Search',
-                onPressed: () => context.go(
-                  '${AppRoutes.transactions}/${AppRoutes.search}',
-                ),
+                onPressed: () => context.go('${AppRoutes.transactions}/${AppRoutes.search}'),
                 icon: const Icon(Icons.search_rounded),
               ),
               const _AvatarButton(),
@@ -87,16 +75,10 @@ class DashboardScreen extends ConsumerWidget {
               children: <Widget>[
                 // ── Balance ───────────────────────────────────────────────
                 lifetime.when(
-                  data: (TransactionSummary summary) => BalanceCard(
-                    balance: summary.balance,
-                    currencyCode: currency,
-                    income: summary.income,
-                    expense: summary.expense,
-                  ),
+                  data: (TransactionSummary summary) =>
+                      BalanceCard(balance: summary.balance, currencyCode: currency, income: summary.income, expense: summary.expense),
                   loading: () => AppShimmer.box(height: 180, radius: AppRadius.xl),
-                  error: (Object error, _) => AppCard(
-                    child: Text('Could not load your balance: $error'),
-                  ),
+                  error: (Object error, _) => AppCard(child: Text('Could not load your balance: $error')),
                 ),
                 AppSpacing.lg.gapH,
 
@@ -108,10 +90,7 @@ class DashboardScreen extends ConsumerWidget {
                 Text('This month', style: context.text.titleMedium),
                 AppSpacing.md.gapH,
                 month.when(
-                  data: (TransactionSummary summary) => _StatRow(
-                    summary: summary,
-                    currencyCode: currency,
-                  ),
+                  data: (TransactionSummary summary) => _StatRow(summary: summary, currencyCode: currency),
                   loading: () => AppShimmer.box(height: 120),
                   error: (Object error, _) => const SizedBox.shrink(),
                 ),
@@ -151,27 +130,11 @@ class _AvatarButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String initials =
-        ref.watch(currentUserProvider)?.name.initials ?? '?';
+    final AppUser? user = ref.watch(currentUserProvider);
 
     return GestureDetector(
       onTap: () => context.go(AppRoutes.profile),
-      child: Hero(
-        // Distinct from the profile header's avatar tag: `indexedStack` keeps
-        // every branch mounted, so both would sit in the shell's subtree at
-        // once and a root-navigator flight (sign-out) would find the tag twice.
-        tag: 'dashboard-avatar',
-        child: CircleAvatar(
-          radius: 18,
-          backgroundColor: context.colors.primaryContainer,
-          child: Text(
-            initials,
-            style: context.text.labelMedium?.copyWith(
-              color: context.colors.onPrimaryContainer,
-            ),
-          ),
-        ),
-      ),
+      child: UserAvatar(avatarUrl: user?.avatarUrl, name: user?.name, radius: 18, heroTag: 'dashboard-avatar'),
     );
   }
 }
@@ -182,53 +145,29 @@ class _QuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<({String label, IconData icon, Color color, TransactionType type})>
-    actions = <({String label, IconData icon, Color color, TransactionType type})>[
-      (
-        label: 'Income',
-        icon: Icons.south_west_rounded,
-        color: context.finance.income,
-        type: TransactionType.income,
-      ),
-      (
-        label: 'Expense',
-        icon: Icons.north_east_rounded,
-        color: context.finance.expense,
-        type: TransactionType.expense,
-      ),
-      (
-        label: 'Transfer',
-        icon: Icons.swap_horiz_rounded,
-        color: context.finance.transfer,
-        type: TransactionType.transfer,
-      ),
-    ];
+    final List<({String label, IconData icon, Color color, TransactionType type})> actions =
+        <({String label, IconData icon, Color color, TransactionType type})>[
+          (label: 'Income', icon: Icons.south_west_rounded, color: context.finance.income, type: TransactionType.income),
+          (label: 'Expense', icon: Icons.north_east_rounded, color: context.finance.expense, type: TransactionType.expense),
+          (label: 'Transfer', icon: Icons.swap_horiz_rounded, color: context.finance.transfer, type: TransactionType.transfer),
+        ];
 
     return Row(
       children: <Widget>[
         for (int i = 0; i < actions.length; i++) ...<Widget>[
           if (i > 0) AppSpacing.md.gapW,
           Expanded(
-            child:
-                AppCard(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.lg,
-                  ),
-                  onTap: () => context.go(
-                    '${AppRoutes.dashboard}/${AppRoutes.transactionForm}',
-                  ),
-                  child: Column(
-                    children: <Widget>[
-                      Icon(
-                        actions[i].icon,
-                        size: 20,
-                        color: actions[i].color,
-                      ),
-                      AppSpacing.sm.gapH,
-                      Text(actions[i].label, style: context.text.labelMedium),
-                    ],
-                  ),
-                ).animate(delay: (60 * i).ms).fadeIn().slideY(begin: 0.2),
+            child: AppCard(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}'),
+              child: Column(
+                children: <Widget>[
+                  Icon(actions[i].icon, size: 20, color: actions[i].color),
+                  AppSpacing.sm.gapH,
+                  Text(actions[i].label, style: context.text.labelMedium),
+                ],
+              ),
+            ).animate(delay: (60 * i).ms).fadeIn().slideY(begin: 0.2),
           ),
         ],
       ],
@@ -280,9 +219,7 @@ class _StatRow extends StatelessWidget {
               currencyCode: currencyCode,
               color: context.finance.savings,
               icon: Icons.savings_outlined,
-              caption: summary.savingsRate > 0
-                  ? '${summary.savingsRate.toPercent()} of income'
-                  : null,
+              caption: summary.savingsRate > 0 ? '${summary.savingsRate.toPercent()} of income' : null,
             ),
           ),
         ],
@@ -296,9 +233,7 @@ class _WeeklyChartSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<SeriesPoint>> series = ref.watch(
-      weeklySeriesProvider,
-    );
+    final AsyncValue<List<SeriesPoint>> series = ref.watch(weeklySeriesProvider);
     final String currency = ref.watch(currencyCodeProvider);
 
     return AppCard(
@@ -316,15 +251,9 @@ class _WeeklyChartSection extends ConsumerWidget {
           ),
           AppSpacing.lg.gapH,
           series.when(
-            data: (List<SeriesPoint> points) => IncomeExpenseBarChart(
-              points: points,
-              currencyCode: currency,
-            ),
+            data: (List<SeriesPoint> points) => IncomeExpenseBarChart(points: points, currencyCode: currency),
             loading: () => AppShimmer.box(height: 220),
-            error: (Object error, _) => SizedBox(
-              height: 220,
-              child: Center(child: Text('Chart unavailable: $error')),
-            ),
+            error: (Object error, _) => SizedBox(height: 220, child: Center(child: Text('Chart unavailable: $error'))),
           ),
         ],
       ),
@@ -360,9 +289,7 @@ class _CategorySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<CategorySlice>> slices = ref.watch(
-      monthByCategoryProvider,
-    );
+    final AsyncValue<List<CategorySlice>> slices = ref.watch(monthByCategoryProvider);
     final String currency = ref.watch(currencyCodeProvider);
 
     return slices.when(
@@ -390,9 +317,7 @@ class _RecentSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<Transaction>> recent = ref.watch(
-      recentTransactionsProvider,
-    );
+    final AsyncValue<List<Transaction>> recent = ref.watch(recentTransactionsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,10 +326,7 @@ class _RecentSection extends ConsumerWidget {
           children: <Widget>[
             Text('Recent activity', style: context.text.titleMedium),
             const Spacer(),
-            TextButton(
-              onPressed: () => context.go(AppRoutes.transactions),
-              child: const Text('See all'),
-            ),
+            TextButton(onPressed: () => context.go(AppRoutes.transactions), child: const Text('See all')),
           ],
         ),
         AppSpacing.sm.gapH,
@@ -417,17 +339,12 @@ class _RecentSection extends ConsumerWidget {
                   title: 'No transactions yet',
                   message: 'Tap Add to record your first one.',
                   actionLabel: 'Add transaction',
-                  onAction: () => context.go(
-                    '${AppRoutes.dashboard}/${AppRoutes.transactionForm}',
-                  ),
+                  onAction: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}'),
                 ),
               );
             }
             return AppCard(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.sm,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
               child: Column(
                 children: <Widget>[
                   for (int i = 0; i < items.length; i++) ...<Widget>[
@@ -435,10 +352,7 @@ class _RecentSection extends ConsumerWidget {
                     TransactionTile(
                       transaction: items[i],
                       showDate: true,
-                      onTap: () => context.go(
-                        '${AppRoutes.dashboard}/${AppRoutes.transactionForm}',
-                        extra: items[i],
-                      ),
+                      onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}', extra: items[i]),
                     ).animate(delay: (40 * i).ms).fadeIn().slideX(begin: 0.05),
                   ],
                 ],

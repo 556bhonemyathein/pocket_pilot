@@ -6,6 +6,7 @@ import 'package:pocket_pilot/core/theme/app_theme.dart';
 import 'package:pocket_pilot/core/widgets/app_button.dart';
 import 'package:pocket_pilot/core/widgets/app_state_views.dart';
 import 'package:pocket_pilot/core/widgets/app_text_field.dart';
+import 'package:pocket_pilot/core/widgets/user_avatar.dart';
 
 /// Widget tests for the shared component library.
 ///
@@ -31,6 +32,25 @@ void main() {
       expect(PocketPilotApp.resolveLocaleCode('my'), 'my');
       expect(PocketPilotApp.resolveLocaleCode('pt'), 'en');
       expect(PocketPilotApp.resolveLocaleCode(null), 'en');
+    });
+  });
+
+  group('UserAvatar', () {
+    testWidgets('renders initials when avatarUrl is null', (WidgetTester tester) async {
+      await pump(tester, const UserAvatar(name: 'Ada Lovelace'));
+      expect(find.text('AL'), findsOneWidget);
+    });
+
+    testWidgets('renders question mark when name is null or empty', (WidgetTester tester) async {
+      await pump(tester, const UserAvatar());
+      expect(find.text('?'), findsOneWidget);
+    });
+
+    test('isNetworkUrl detects web URLs', () {
+      expect(UserAvatar.isNetworkUrl('https://example.com/photo.jpg'), isTrue);
+      expect(UserAvatar.isNetworkUrl('http://example.com/photo.jpg'), isTrue);
+      expect(UserAvatar.isNetworkUrl('/data/user/0/app.pocketpilot/avatar.jpg'), isFalse);
+      expect(UserAvatar.isNetworkUrl(r'C:\Users\Photo.jpg'), isFalse);
     });
   });
 

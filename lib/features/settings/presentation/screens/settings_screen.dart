@@ -113,10 +113,15 @@ class SettingsScreen extends ConsumerWidget {
                   trailing: const Icon(Icons.open_in_new_rounded, size: 16),
                   onTap: () async {
                     final Uri uri = Uri.parse(AppConstants.privacyPolicyUrl);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    } else if (context.mounted) {
-                      AppFeedback.warning(context, 'Could not open privacy policy URL');
+                    try {
+                      final bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      if (!launched && context.mounted) {
+                        AppFeedback.warning(context, 'Could not open privacy policy URL');
+                      }
+                    } catch (_) {
+                      if (context.mounted) {
+                        AppFeedback.warning(context, 'Could not open privacy policy URL');
+                      }
                     }
                   },
                 ),

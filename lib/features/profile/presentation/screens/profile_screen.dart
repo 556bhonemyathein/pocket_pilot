@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +8,7 @@ import '../../../../core/extensions/extensions.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/glass_panel.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../../../../shared/models/app_user.dart';
 import '../../../../shared/providers/sync_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -25,18 +25,9 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: <Widget>[
-          const SliverAppBar(
-            floating: true,
-            titleSpacing: AppSpacing.page,
-            title: Text('Profile'),
-          ),
+          const SliverAppBar(floating: true, titleSpacing: AppSpacing.page, title: Text('Profile')),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              0,
-              AppSpacing.page,
-              120,
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 120),
             sliver: SliverList.list(
               children: <Widget>[
                 _ProfileHeader(user: user),
@@ -51,12 +42,7 @@ class ProfileScreen extends ConsumerWidget {
                       subtitle: 'Name, avatar and currency',
                       onTap: () => context.pushNamed(AppRoutes.editProfile),
                     ),
-                    _Tile(
-                      icon: Icons.lock_outline_rounded,
-                      title: 'Change password',
-                      onTap: () =>
-                          context.pushNamed(AppRoutes.changePassword),
-                    ),
+                    _Tile(icon: Icons.lock_outline_rounded, title: 'Change password', onTap: () => context.pushNamed(AppRoutes.changePassword)),
                     _Tile(
                       icon: Icons.category_outlined,
                       title: 'Categories',
@@ -102,35 +88,24 @@ class _ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Row(
         children: <Widget>[
-          Hero(
-            tag: 'profile-avatar',
-            child: _Avatar(user: user, radius: 32),
-          ),
+          UserAvatar(avatarUrl: user?.avatarUrl, name: user?.name, radius: 32, heroTag: 'profile-avatar'),
           AppSpacing.lg.gapW,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  user?.name ?? 'Signed out',
-                  style: context.text.titleMedium,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(user?.name ?? 'Signed out', style: context.text.titleMedium, overflow: TextOverflow.ellipsis),
                 AppSpacing.xxs.gapH,
                 Text(
                   user?.email ?? '',
-                  style: context.text.bodySmall?.copyWith(
-                    color: context.colors.onSurfaceVariant,
-                  ),
+                  style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (user?.createdAt != null) ...<Widget>[
                   AppSpacing.sm.gapH,
                   Text(
                     'Member since ${user!.createdAt!.monthYear}',
-                    style: context.text.labelSmall?.copyWith(
-                      color: context.colors.onSurfaceVariant,
-                    ),
+                    style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -139,61 +114,6 @@ class _ProfileHeader extends StatelessWidget {
         ],
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.06);
-  }
-}
-
-/// Avatar with a graceful three-step fallback: network image → initials → '?'.
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.user, this.radius = 24});
-
-  final AppUser? user;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    final String? url = user?.avatarUrl;
-
-    if (url != null && url.isNotEmpty) {
-      return ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: url,
-          height: radius * 2,
-          width: radius * 2,
-          fit: BoxFit.cover,
-          placeholder: (_, _) => CircleAvatar(radius: radius),
-          errorWidget: (_, _, _) => _InitialsAvatar(
-            initials: user?.name.initials ?? '?',
-            radius: radius,
-          ),
-        ),
-      );
-    }
-
-    return _InitialsAvatar(
-      initials: user?.name.initials ?? '?',
-      radius: radius,
-    );
-  }
-}
-
-class _InitialsAvatar extends StatelessWidget {
-  const _InitialsAvatar({required this.initials, required this.radius});
-
-  final String initials;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: context.colors.primaryContainer,
-      child: Text(
-        initials,
-        style: context.text.titleMedium?.copyWith(
-          color: context.colors.onPrimaryContainer,
-        ),
-      ),
-    );
   }
 }
 
@@ -210,21 +130,13 @@ class _Section extends StatelessWidget {
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: Text(
-            title,
-            style: context.text.labelLarge?.copyWith(
-              color: context.colors.onSurfaceVariant,
-            ),
-          ),
+          child: Text(title, style: context.text.labelLarge?.copyWith(color: context.colors.onSurfaceVariant)),
         ),
         AppCard(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
           child: Column(
             children: <Widget>[
-              for (int i = 0; i < tiles.length; i++) ...<Widget>[
-                if (i > 0) const Divider(height: 1),
-                tiles[i],
-              ],
+              for (int i = 0; i < tiles.length; i++) ...<Widget>[if (i > 0) const Divider(height: 1), tiles[i]],
             ],
           ),
         ),
@@ -234,13 +146,7 @@ class _Section extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.subtitle,
-    this.trailing,
-  });
+  const _Tile({required this.icon, required this.title, required this.onTap, this.subtitle, this.trailing});
 
   final IconData icon;
   final String title;
@@ -253,16 +159,8 @@ class _Tile extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, size: 22),
       title: Text(title),
-      subtitle: subtitle == null
-          ? null
-          : Text(
-              subtitle!,
-              style: context.text.labelSmall?.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
-            ),
-      trailing:
-          trailing ?? const Icon(Icons.chevron_right_rounded, size: 20),
+      subtitle: subtitle == null ? null : Text(subtitle!, style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant)),
+      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, size: 20),
       onTap: onTap,
     );
   }
@@ -308,8 +206,7 @@ class _SyncTileState extends ConsumerState<_SyncTile> {
 
   @override
   Widget build(BuildContext context) {
-    final DateTime? last =
-        ref.read(syncCoordinatorProvider.notifier).lastSyncAt;
+    final DateTime? last = ref.read(syncCoordinatorProvider.notifier).lastSyncAt;
 
     return _Tile(
       icon: Icons.sync_rounded,
@@ -322,16 +219,8 @@ class _SyncTileState extends ConsumerState<_SyncTile> {
           : 'Last synced ${last.formattedWithTime}',
       onTap: _syncing ? () {} : _sync,
       trailing: _syncing
-          ? const SizedBox(
-              height: 18,
-              width: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Badge(
-              isLabelVisible: widget.pending > 0,
-              label: Text('${widget.pending}'),
-              child: const Icon(Icons.chevron_right_rounded, size: 20),
-            ),
+          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+          : Badge(isLabelVisible: widget.pending > 0, label: Text('${widget.pending}'), child: const Icon(Icons.chevron_right_rounded, size: 20)),
     );
   }
 }

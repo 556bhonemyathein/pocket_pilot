@@ -147,9 +147,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             recognizer: TapGestureRecognizer()
                               ..onTap = () async {
                                 final Uri uri = Uri.parse(AppConstants.privacyPolicyUrl);
-                                if (await canLaunchUrl(uri)) {
+                                try {
                                   await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                }
+                                } catch (_) {}
                               },
                           ),
                           const TextSpan(text: '.'),
