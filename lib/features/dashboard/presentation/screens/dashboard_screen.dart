@@ -68,7 +68,7 @@ class DashboardScreen extends ConsumerWidget {
                   style: context.text.titleSmall?.copyWith(
                     color: context.isDark ? Colors.white : const Color(0xFF0F172A),
                     fontWeight: FontWeight.w500,
-                    fontSize: 15,
+                    fontSize: 13,
                     letterSpacing: -0.2,
                   ),
                 ),
