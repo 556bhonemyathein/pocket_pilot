@@ -203,134 +203,117 @@ class _CapsuleSearchBarState extends ConsumerState<_CapsuleSearchBar> {
     final bool isDark = context.isDark;
     final Color capsuleBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
     final Color textColor = isDark ? Colors.white : const Color(0xFF1E293B);
-    final Color iconColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7);
 
     final List<Category> allCategories = ref.watch(categoriesProvider).value ?? DefaultCategories.build();
     final List<Category> expenseCategories = allCategories.where((Category c) => c.kind != CategoryKind.income).toList();
     final List<Category> displayList = expenseCategories.isNotEmpty ? expenseCategories : allCategories;
     final Category currentCategory = displayList.isNotEmpty ? displayList[_index % displayList.length] : Category.unknown;
 
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final double maxWidth = constraints.maxWidth;
-        // Text width is constrained so it never stretches into the center artwork zone
-        final double textMaxWidth = (maxWidth * 0.44).clamp(65.0, 140.0);
-
-        return GestureDetector(
-          onTap: () => context.go('${AppRoutes.transactions}/${AppRoutes.search}'),
-          child: Container(
-            height: 38,
-            decoration: BoxDecoration(
-              color: capsuleBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
-              boxShadow: <BoxShadow>[
-                BoxShadow(color: const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.25 : 0.12), blurRadius: 8, spreadRadius: 0.5),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  // Themed category illustration artwork and soft ambient glow
-                  AnimatedSwitcher(
-                    duration: 350.ms,
-                    transitionBuilder: (Widget child, Animation<double> animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    child: SizedBox.expand(
-                      key: ValueKey<String>(currentCategory.id),
-                      child: CustomPaint(
-                        painter: _CategoryBannerPainter(category: currentCategory, fadeColor: capsuleBg, isDark: isDark),
+    return GestureDetector(
+      onTap: () => context.go('${AppRoutes.transactions}/${AppRoutes.search}'),
+      child: Container(
+        height: 38,
+        decoration: BoxDecoration(
+          color: capsuleBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
+          boxShadow: <BoxShadow>[BoxShadow(color: const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.25 : 0.12), blurRadius: 8, spreadRadius: 0.5)],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              // Category-themed subtle gradient wash across the capsule
+              AnimatedSwitcher(
+                duration: 350.ms,
+                child: SizedBox.expand(
+                  key: ValueKey<String>('bg_${currentCategory.id}'),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: <Color>[
+                          Colors.transparent,
+                          currentCategory.color.withValues(alpha: isDark ? 0.22 : 0.09),
+                        ],
                       ),
                     ),
                   ),
-
-                  // Content row: Left-aligned Category Name, Right-aligned Search Icon (only one icon in search field)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, right: 10),
-                    child: Row(
-                      children: <Widget>[
-                        SizedBox(
-                          width: textMaxWidth,
-                          child: AnimatedSwitcher(
-                            duration: 300.ms,
-                            layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                              return Stack(alignment: Alignment.centerLeft, children: <Widget>[...previousChildren, ?currentChild]);
-                            },
-                            transitionBuilder: (Widget child, Animation<double> animation) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0, 0.35),
-                                    end: Offset.zero,
-                                  ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: FittedBox(
-                              key: ValueKey<String>(currentCategory.id),
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                currentCategory.name,
-                                maxLines: 1,
-                                style: TextStyle(color: textColor, fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: -0.2),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(Icons.search_rounded, color: iconColor, size: 20),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+
+              // Content row: Category Name on left, Single Category Artwork on right (only 1 icon in search box)
+              Padding(
+                padding: const EdgeInsets.only(left: 14, right: 8),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: 300.ms,
+                        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                          return Stack(alignment: Alignment.centerLeft, children: <Widget>[...previousChildren, ?currentChild]);
+                        },
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.35),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          currentCategory.name,
+                          key: ValueKey<String>(currentCategory.id),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Exactly ONE icon/image in the search box — the belonging category artwork
+                    AnimatedSwitcher(
+                      duration: 300.ms,
+                      child: SizedBox(
+                        key: ValueKey<String>('art_${currentCategory.id}'),
+                        width: 30,
+                        height: 30,
+                        child: CustomPaint(
+                          painter: _CategoryArtworkPainter(category: currentCategory, isDark: isDark),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
 /// Illustrates artwork belonging specifically to the active category in the capsule search bar.
-class _CategoryBannerPainter extends CustomPainter {
-  const _CategoryBannerPainter({required this.category, required this.fadeColor, required this.isDark});
+class _CategoryArtworkPainter extends CustomPainter {
+  const _CategoryArtworkPainter({required this.category, required this.isDark});
 
   final Category category;
-  final Color fadeColor;
   final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
-    // Keep artwork safely centered in the middle zone between text on left and search icon on right
-    final double cx = (w * 0.58).clamp(80.0, w - 42.0);
-    final double cy = h * 0.50;
+    final double cx = size.width / 2;
+    final double cy = size.height / 2;
 
     final String name = category.name.toLowerCase();
     final Color catColor = category.color;
-
-    // Category-themed soft radial glow centered around the artwork (seamless fade, no dark bands)
-    final Rect glowRect = Rect.fromCenter(center: Offset(cx, cy), width: (w * 0.50).clamp(50.0, 120.0), height: h);
-    final Paint glowPaint = Paint()
-      ..shader = RadialGradient(
-        center: Alignment.center,
-        radius: 0.85,
-        colors: <Color>[
-          catColor.withValues(alpha: isDark ? 0.35 : 0.16),
-          catColor.withValues(alpha: isDark ? 0.14 : 0.05),
-          Colors.transparent,
-        ],
-        stops: const <double>[0.0, 0.55, 1.0],
-      ).createShader(glowRect);
-    canvas.drawRect(glowRect, glowPaint);
 
     // Draw artwork corresponding to category
     if (name.contains('food') ||
@@ -685,8 +668,7 @@ class _CategoryBannerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _CategoryBannerPainter oldDelegate) =>
-      oldDelegate.category != category || oldDelegate.fadeColor != fadeColor || oldDelegate.isDark != isDark;
+  bool shouldRepaint(covariant _CategoryArtworkPainter oldDelegate) => oldDelegate.category != category || oldDelegate.isDark != isDark;
 }
 
 /// Shortcuts to the three ways of adding money movement.
