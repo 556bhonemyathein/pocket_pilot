@@ -20,39 +20,32 @@ class ReportExporter {
 
   /// RFC 4180 CSV. Fields containing a comma, quote or newline are quoted and
   /// internal quotes are doubled — the rule spreadsheets actually expect.
-  Future<Result<File>> toCsv({
-    required List<Transaction> transactions,
-    required Map<String, Category> categories,
-    required String fileName,
-  }) => guard(() async {
-    final StringBuffer buffer = StringBuffer()
-      ..writeln(
-        'Date,Type,Category,Amount,Currency,Note,Tags,Transfer To,Recurring',
-      );
+  Future<Result<File>> toCsv({required List<Transaction> transactions, required Map<String, Category> categories, required String fileName}) =>
+      guard(() async {
+        final StringBuffer buffer = StringBuffer()..writeln('Date,Type,Category,Amount,Currency,Note,Tags,Transfer To,Recurring');
 
-    for (final Transaction t in transactions) {
-      final Category category = categories[t.categoryId] ?? Category.unknown;
-      buffer.writeln(
-        <String>[
-          t.date.isoDate,
-          t.type.label,
-          category.name,
-          t.amount.toStringAsFixed(2),
-          t.currencyCode,
-          t.note,
-          t.tags.join('; '),
-          t.transferTo ?? '',
-          t.recurrence.label,
-        ].map(_escapeCsv).join(','),
-      );
-    }
+        for (final Transaction t in transactions) {
+          final Category category = categories[t.categoryId] ?? Category.unknown;
+          buffer.writeln(
+            <String>[
+              t.date.isoDate,
+              t.type.label,
+              category.name,
+              t.amount.toStringAsFixed(2),
+              t.currencyCode,
+              t.note,
+              t.tags.join('; '),
+              t.transferTo ?? '',
+              t.recurrence.label,
+            ].map(_escapeCsv).join(','),
+          );
+        }
 
-    return _write('$fileName.csv', buffer.toString());
-  });
+        return _write('$fileName.csv', buffer.toString());
+      });
 
   static String _escapeCsv(String value) {
-    final bool needsQuoting =
-        value.contains(',') || value.contains('"') || value.contains('\n');
+    final bool needsQuoting = value.contains(',') || value.contains('"') || value.contains('\n');
     if (!needsQuoting) return value;
     return '"${value.replaceAll('"', '""')}"';
   }
@@ -65,18 +58,24 @@ class ReportExporter {
     required String subtitle,
     required String currencyCode,
     required String fileName,
+    pw.Font? regularFont,
+    pw.Font? boldFont,
   }) => guard(() async {
-    final pw.Document document = pw.Document();
+    final pw.ThemeData theme = regularFont != null && boldFont != null
+        ? pw.ThemeData.withFont(base: regularFont, bold: boldFont)
+        : regularFont != null
+        ? pw.ThemeData.withFont(base: regularFont)
+        : pw.ThemeData.base();
 
-    final double income = transactions
-        .where((Transaction t) => t.type.sign > 0)
-        .fold<double>(0, (double sum, Transaction t) => sum + t.amount);
-    final double expense = transactions
-        .where((Transaction t) => t.type.sign < 0)
-        .fold<double>(0, (double sum, Transaction t) => sum + t.amount);
+    final pw.Document document = pw.Document(theme: theme);
 
-    String money(double value) =>
-        '$currencyCode ${value.toStringAsFixed(2)}';
+    final double income = transactions.where((Transaction t) => t.type.sign > 0).fold<double>(0, (double sum, Transaction t) => sum + t.amount);
+    final double expense = transactions.where((Transaction t) => t.type.sign < 0).fold<double>(0, (double sum, Transaction t) => sum + t.amount);
+
+    String money(double value) => '$currencyCode ${value.toStringAsFixed(2)}';
+
+    final String safeTitle = title.replaceAll('·', '-');
+    final String safeSubtitle = subtitle.replaceAll('→', '->').replaceAll('·', '-');
 
     document.addPage(
       pw.MultiPage(
@@ -85,28 +84,16 @@ class ReportExporter {
         header: (pw.Context context) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: <pw.Widget>[
-            pw.Text(
-              title,
-              style: pw.TextStyle(
-                fontSize: 22,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
+            pw.Text(safeTitle, style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 4),
-            pw.Text(
-              subtitle,
-              style: const pw.TextStyle(
-                fontSize: 11,
-                color: PdfColors.grey700,
-              ),
-            ),
+            pw.Text(safeSubtitle, style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey700)),
             pw.Divider(),
           ],
         ),
         footer: (pw.Context context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
-            'Page ${context.pageNumber} of ${context.pagesCount} · '
+            'Page ${context.pageNumber} of ${context.pagesCount} - '
             'PocketPilot',
             style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
           ),
@@ -117,33 +104,19 @@ class ReportExporter {
             children: <pw.Widget>[
               _summaryTile('Income', money(income), PdfColors.green700),
               _summaryTile('Expenses', money(expense), PdfColors.red700),
-              _summaryTile(
-                'Net',
-                money(income - expense),
-                PdfColors.blue700,
-              ),
+              _summaryTile('Net', money(income - expense), PdfColors.blue700),
             ],
           ),
           pw.SizedBox(height: 20),
 
-          pw.Text(
-            'Transactions (${transactions.length})',
-            style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
-          ),
+          pw.Text('Transactions (${transactions.length})', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 8),
           pw.TableHelper.fromTextArray(
             headers: <String>['Date', 'Category', 'Type', 'Note', 'Amount'],
-            headerStyle: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            headerStyle: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
             cellStyle: const pw.TextStyle(fontSize: 9),
-            headerDecoration: const pw.BoxDecoration(
-              color: PdfColors.grey200,
-            ),
-            cellAlignments: const <int, pw.Alignment>{
-              4: pw.Alignment.centerRight,
-            },
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+            cellAlignments: const <int, pw.Alignment>{4: pw.Alignment.centerRight},
             data: transactions
                 .map(
                   (Transaction t) => <String>[
@@ -173,18 +146,11 @@ class ReportExporter {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: <pw.Widget>[
-          pw.Text(
-            label,
-            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-          ),
+          pw.Text(label, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
           pw.SizedBox(height: 4),
           pw.Text(
             value,
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-              color: color,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: color),
           ),
         ],
       ),
@@ -193,11 +159,7 @@ class ReportExporter {
 
   /// Writes to the temp directory: exports are transient artefacts handed
   /// straight to the share sheet, not something to accumulate in app storage.
-  static Future<File> _write(
-    String name,
-    String? contents, {
-    List<int>? bytes,
-  }) async {
+  static Future<File> _write(String name, String? contents, {List<int>? bytes}) async {
     final Directory directory = await getTemporaryDirectory();
     final File file = File('${directory.path}/$name');
     if (bytes != null) {

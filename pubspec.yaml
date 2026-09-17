@@ -57,6 +57,7 @@ dependencies:
   crypto: ^3.0.7
   collection: ^1.19.1
   url_launcher: ^6.3.2
+  open_filex: ^4.7.0
 
 dev_dependencies:
   flutter_test:

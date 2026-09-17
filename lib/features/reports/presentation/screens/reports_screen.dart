@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle, ByteData;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/extensions/extensions.dart';
@@ -17,6 +20,7 @@ import '../../../../shared/models/transaction.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../categories/presentation/providers/category_providers.dart';
 import '../../../transactions/domain/transaction_repository.dart';
+import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/report_exporter.dart';
 import '../providers/report_providers.dart';
 import '../widgets/charts.dart';
@@ -84,18 +88,43 @@ class ReportsScreen extends ConsumerWidget {
         child: Column(
           children: <Widget>[
             ListTile(
-              leading: const Icon(Icons.table_chart_outlined),
+              leading: Container(
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(AppRadius.sm)),
+                child: const Icon(Icons.table_chart_outlined, color: Colors.green),
+              ),
               title: const Text('CSV spreadsheet'),
               subtitle: const Text('Open in Excel, Numbers or Sheets'),
+              trailing: IconButton(
+                tooltip: 'Share CSV',
+                icon: const Icon(Icons.share_outlined, size: 20),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _export(context, ref, asPdf: false, shareDirectly: true);
+                },
+              ),
               onTap: () {
                 Navigator.of(context).pop();
                 _export(context, ref, asPdf: false);
               },
             ),
+            const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.picture_as_pdf_outlined),
+              leading: Container(
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(AppRadius.sm)),
+                child: const Icon(Icons.picture_as_pdf_outlined, color: Colors.redAccent),
+              ),
               title: const Text('PDF summary'),
               subtitle: const Text('Formatted totals and full ledger'),
+              trailing: IconButton(
+                tooltip: 'Share PDF',
+                icon: const Icon(Icons.share_outlined, size: 20),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _export(context, ref, asPdf: true, shareDirectly: true);
+                },
+              ),
               onTap: () {
                 Navigator.of(context).pop();
                 _export(context, ref, asPdf: true);
@@ -107,22 +136,37 @@ class ReportsScreen extends ConsumerWidget {
     );
   }
 
-  /// Generates the file then hands it to the platform share sheet.
-  ///
-  /// Sharing rather than saving is deliberate: it lets the user decide the
-  /// destination (mail, Drive, Files) without the app requesting storage
-  /// permissions it does not otherwise need.
-  Future<void> _export(BuildContext context, WidgetRef ref, {required bool asPdf}) async {
+  /// Generates the file and opens it directly in a viewer or shares it.
+  Future<void> _export(BuildContext context, WidgetRef ref, {required bool asPdf, bool shareDirectly = false}) async {
     final ReportRange range = ref.read(reportRangeProvider);
     final String currency = ref.read(currencyCodeProvider);
     final Map<String, Category> categories = ref.read(categoryLookupProvider);
 
-    final List<Transaction> transactions = await ref.read(reportTransactionsProvider.future);
+    AppFeedback.info(context, 'Preparing ${asPdf ? 'PDF summary' : 'CSV spreadsheet'}...');
 
-    if (!context.mounted) return;
+    final List<Transaction> rangeTransactions = await ref.read(reportTransactionsProvider.future);
+    List<Transaction> transactions = rangeTransactions;
+    String subtitle = range.label;
+
     if (transactions.isEmpty) {
-      AppFeedback.warning(context, 'Nothing to export in this period');
-      return;
+      final List<Transaction> all = (await ref.read(transactionRepositoryProvider).exportAll()).dataOrNull ?? const <Transaction>[];
+      if (all.isNotEmpty) {
+        transactions = all;
+        subtitle = 'All transactions (${range.label} had no activity)';
+      }
+    }
+
+    pw.Font? regularFont;
+    pw.Font? boldFont;
+    if (asPdf) {
+      try {
+        final ByteData regData = await rootBundle.load('assets/fonts/PlusJakartaSans-Regular.ttf');
+        regularFont = pw.Font.ttf(regData);
+        final ByteData boldData = await rootBundle.load('assets/fonts/PlusJakartaSans-Bold.ttf');
+        boldFont = pw.Font.ttf(boldData);
+      } catch (_) {
+        // Fall back to default fonts if assets are unavailable
+      }
     }
 
     const ReportExporter exporter = ReportExporter();
@@ -133,16 +177,33 @@ class ReportsScreen extends ConsumerWidget {
             transactions: transactions,
             categories: categories,
             title: 'PocketPilot report',
-            subtitle: range.label,
+            subtitle: subtitle,
             currencyCode: currency,
             fileName: fileName,
+            regularFont: regularFont,
+            boldFont: boldFont,
           )
         : await exporter.toCsv(transactions: transactions, categories: categories, fileName: fileName);
 
     if (!context.mounted) return;
     await result.when(
       success: (File file) async {
-        await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)], text: 'PocketPilot report · ${range.label}'));
+        if (shareDirectly) {
+          await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)], text: 'PocketPilot report - $subtitle'));
+          return;
+        }
+
+        // Open directly with the device's default application
+        final OpenResult openResult = await OpenFilex.open(file.path, type: asPdf ? 'application/pdf' : 'text/csv');
+
+        if (!context.mounted) return;
+
+        if (openResult.type == ResultType.done) {
+          AppFeedback.success(context, 'Opened ${asPdf ? 'PDF summary' : 'CSV spreadsheet'}');
+        } else {
+          // If no viewer is installed or permission needed, summon share sheet
+          await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)], text: 'PocketPilot report - $subtitle'));
+        }
       },
       failure: (failure) async => AppFeedback.error(context, failure),
     );
