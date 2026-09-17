@@ -210,80 +210,90 @@ class _CapsuleSearchBarState extends ConsumerState<_CapsuleSearchBar> {
     final List<Category> displayList = expenseCategories.isNotEmpty ? expenseCategories : allCategories;
     final Category currentCategory = displayList.isNotEmpty ? displayList[_index % displayList.length] : Category.unknown;
 
-    return GestureDetector(
-      onTap: () => context.go('${AppRoutes.transactions}/${AppRoutes.search}'),
-      child: Container(
-        height: 38,
-        decoration: BoxDecoration(
-          color: capsuleBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
-          boxShadow: <BoxShadow>[BoxShadow(color: const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.25 : 0.12), blurRadius: 8, spreadRadius: 0.5)],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              // Themed category illustration artwork and glow
-              AnimatedSwitcher(
-                duration: 350.ms,
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                child: SizedBox.expand(
-                  key: ValueKey<String>(currentCategory.id),
-                  child: CustomPaint(
-                    painter: _CategoryBannerPainter(category: currentCategory, fadeColor: capsuleBg, isDark: isDark),
-                  ),
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double maxWidth = constraints.maxWidth;
+        // Text width is constrained so it never stretches into the center artwork zone
+        final double textMaxWidth = (maxWidth * 0.44).clamp(65.0, 140.0);
 
-              // Content row
-              Padding(
-                padding: const EdgeInsets.only(left: 12, right: 10),
-                child: Row(
-                  children: <Widget>[
-                    SizedBox(
-                      width: 86,
-                      child: AnimatedSwitcher(
-                        duration: 300.ms,
-                        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                          return Stack(alignment: Alignment.centerLeft, children: <Widget>[...previousChildren, ?currentChild]);
-                        },
-                        transitionBuilder: (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0, 0.35),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: FittedBox(
-                          key: ValueKey<String>(currentCategory.id),
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            currentCategory.name,
-                            maxLines: 1,
-                            style: TextStyle(color: textColor, fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: -0.2),
-                          ),
-                        ),
+        return GestureDetector(
+          onTap: () => context.go('${AppRoutes.transactions}/${AppRoutes.search}'),
+          child: Container(
+            height: 38,
+            decoration: BoxDecoration(
+              color: capsuleBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
+              boxShadow: <BoxShadow>[
+                BoxShadow(color: const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.25 : 0.12), blurRadius: 8, spreadRadius: 0.5),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  // Themed category illustration artwork and soft ambient glow
+                  AnimatedSwitcher(
+                    duration: 350.ms,
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: SizedBox.expand(
+                      key: ValueKey<String>(currentCategory.id),
+                      child: CustomPaint(
+                        painter: _CategoryBannerPainter(category: currentCategory, fadeColor: capsuleBg, isDark: isDark),
                       ),
                     ),
-                    const Spacer(),
-                    Icon(Icons.search_rounded, color: iconColor, size: 21),
-                  ],
-                ),
+                  ),
+
+                  // Content row: Left-aligned Category Name, Right-aligned Search Icon (only one icon in search field)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12, right: 10),
+                    child: Row(
+                      children: <Widget>[
+                        SizedBox(
+                          width: textMaxWidth,
+                          child: AnimatedSwitcher(
+                            duration: 300.ms,
+                            layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                              return Stack(alignment: Alignment.centerLeft, children: <Widget>[...previousChildren, ?currentChild]);
+                            },
+                            transitionBuilder: (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.35),
+                                    end: Offset.zero,
+                                  ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: FittedBox(
+                              key: ValueKey<String>(currentCategory.id),
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                currentCategory.name,
+                                maxLines: 1,
+                                style: TextStyle(color: textColor, fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(Icons.search_rounded, color: iconColor, size: 20),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -300,61 +310,94 @@ class _CategoryBannerPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
-    final double cx = w * 0.70;
+    // Keep artwork safely centered in the middle zone between text on left and search icon on right
+    final double cx = (w * 0.58).clamp(80.0, w - 42.0);
     final double cy = h * 0.50;
 
     final String name = category.name.toLowerCase();
     final Color catColor = category.color;
 
-    // Category-themed ambient glow on the right
-    final Rect glowRect = Rect.fromLTWH(w * 0.44, 0, w * 0.56, h);
+    // Category-themed soft radial glow centered around the artwork (seamless fade, no dark bands)
+    final Rect glowRect = Rect.fromCenter(center: Offset(cx, cy), width: (w * 0.50).clamp(50.0, 120.0), height: h);
     final Paint glowPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
+      ..shader = RadialGradient(
+        center: Alignment.center,
+        radius: 0.85,
         colors: <Color>[
+          catColor.withValues(alpha: isDark ? 0.35 : 0.16),
+          catColor.withValues(alpha: isDark ? 0.14 : 0.05),
           Colors.transparent,
-          catColor.withValues(alpha: 0.12),
-          catColor.withValues(alpha: isDark ? 0.35 : 0.22),
-          catColor.withValues(alpha: isDark ? 0.45 : 0.28),
         ],
-        stops: const <double>[0.0, 0.35, 0.75, 1.0],
+        stops: const <double>[0.0, 0.55, 1.0],
       ).createShader(glowRect);
     canvas.drawRect(glowRect, glowPaint);
 
-    // Draw illustration corresponding to category
-    if (name.contains('food') || name.contains('drink') || name.contains('restaurant') || name.contains('dining') || name.contains('cafe')) {
+    // Draw artwork corresponding to category
+    if (name.contains('food') ||
+        name.contains('drink') ||
+        name.contains('restaurant') ||
+        name.contains('dining') ||
+        name.contains('cafe') ||
+        name.contains('မုန့်') ||
+        name.contains('အစား')) {
       _drawFoodIllustration(canvas, cx, cy);
-    } else if (name.contains('grocer') || name.contains('market')) {
+    } else if (name.contains('grocer') || name.contains('market') || name.contains('ကုန်စုံ') || name.contains('စျေး')) {
       _drawGroceriesIllustration(canvas, cx, cy);
-    } else if (name.contains('shop') || name.contains('cloth') || name.contains('gift')) {
+    } else if (name.contains('shop') || name.contains('cloth') || name.contains('gift') || name.contains('ဝယ်')) {
       _drawShoppingIllustration(canvas, cx, cy);
-    } else if (name.contains('transport') || name.contains('car') || name.contains('fuel') || name.contains('transit')) {
+    } else if (name.contains('transport') ||
+        name.contains('car') ||
+        name.contains('fuel') ||
+        name.contains('transit') ||
+        name.contains('bus') ||
+        name.contains('ကား') ||
+        name.contains('ယာဉ်')) {
       _drawTransportIllustration(canvas, cx, cy);
-    } else if (name.contains('bill') || name.contains('utilit') || name.contains('power') || name.contains('electric')) {
+    } else if (name.contains('house') || name.contains('home') || name.contains('rent') || name.contains('အိမ်')) {
+      _drawHousingIllustration(canvas, cx, cy);
+    } else if (name.contains('bill') ||
+        name.contains('utilit') ||
+        name.contains('power') ||
+        name.contains('electric') ||
+        name.contains('water') ||
+        name.contains('ဘေလ်') ||
+        name.contains('မီး')) {
       _drawBillsIllustration(canvas, cx, cy);
-    } else if (name.contains('entertain') || name.contains('movie') || name.contains('cinema') || name.contains('game')) {
+    } else if (name.contains('entertain') ||
+        name.contains('movie') ||
+        name.contains('cinema') ||
+        name.contains('game') ||
+        name.contains('ရုပ်ရှင်') ||
+        name.contains('ကစား')) {
       _drawEntertainmentIllustration(canvas, cx, cy);
-    } else if (name.contains('health') || name.contains('medic') || name.contains('doctor') || name.contains('pharm')) {
+    } else if (name.contains('health') ||
+        name.contains('medic') ||
+        name.contains('doctor') ||
+        name.contains('pharm') ||
+        name.contains('ဆေး') ||
+        name.contains('ကျန်းမာ')) {
       _drawHealthIllustration(canvas, cx, cy);
-    } else if (name.contains('travel') || name.contains('flight') || name.contains('trip') || name.contains('hotel')) {
+    } else if (name.contains('educat') ||
+        name.contains('school') ||
+        name.contains('course') ||
+        name.contains('book') ||
+        name.contains('study') ||
+        name.contains('ကျောင်း') ||
+        name.contains('ပညာ')) {
+      _drawEducationIllustration(canvas, cx, cy);
+    } else if (name.contains('travel') || name.contains('flight') || name.contains('trip') || name.contains('hotel') || name.contains('ခရီး')) {
       _drawTravelIllustration(canvas, cx, cy);
-    } else if (name.contains('salar') || name.contains('saving') || name.contains('invest') || name.contains('income')) {
+    } else if (name.contains('salar') ||
+        name.contains('saving') ||
+        name.contains('invest') ||
+        name.contains('income') ||
+        name.contains('bonus') ||
+        name.contains('လစာ') ||
+        name.contains('စုငွေ')) {
       _drawSavingsIllustration(canvas, cx, cy);
     } else {
-      _drawDefaultIllustration(canvas, cx, cy, catColor);
+      _drawGeneralIllustration(canvas, cx, cy, catColor);
     }
-
-    // Left fade mask so text on the left is 100% crisp and readable
-    final Rect fadeRect = Rect.fromLTWH(0, 0, w * 0.52, h);
-    final Paint fadePaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: <Color>[fadeColor, fadeColor.withValues(alpha: 0.85), Colors.transparent],
-        stops: const <double>[0.0, 0.75, 1.0],
-      ).createShader(fadeRect);
-    canvas.drawRect(fadeRect, fadePaint);
   }
 
   void _drawFoodIllustration(Canvas canvas, double cx, double cy) {
@@ -372,21 +415,21 @@ class _CategoryBannerPainter extends CustomPainter {
     // Burger
     final Paint bunPaint = Paint()..color = const Color(0xFFF59E0B);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy - 2), width: 14, height: 5), const Radius.circular(2.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy - 2), width: 13, height: 5), const Radius.circular(2.5)),
       bunPaint,
     );
     final Paint lettucePaint = Paint()..color = const Color(0xFF10B981);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 1), width: 14, height: 2), const Radius.circular(1)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 1), width: 13, height: 2), const Radius.circular(1)),
       lettucePaint,
     );
     final Paint pattyPaint = Paint()..color = const Color(0xFF78350F);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 3.5), width: 14, height: 2.5), const Radius.circular(1)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 3.5), width: 13, height: 2.5), const Radius.circular(1)),
       pattyPaint,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 6.5), width: 13, height: 3), const Radius.circular(1.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 6.5), width: 12, height: 3), const Radius.circular(1.5)),
       bunPaint,
     );
   }
@@ -395,94 +438,120 @@ class _CategoryBannerPainter extends CustomPainter {
     // Grocery bag
     final Paint bagPaint = Paint()..color = const Color(0xFFD97706);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 4, cy + 3), width: 14, height: 15), const Radius.circular(2.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 4, cy + 3), width: 13, height: 14), const Radius.circular(2.5)),
       bagPaint,
     );
     // Bread stick poking out
     final Paint breadPaint = Paint()..color = const Color(0xFFFBBF24);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 6, cy - 4), width: 4.5, height: 10), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 6, cy - 4), width: 4.5, height: 9), const Radius.circular(2)),
       breadPaint,
     );
     // Fresh Apple
     final Paint applePaint = Paint()..color = const Color(0xFFEF4444);
-    canvas.drawCircle(Offset(cx + 7, cy + 3), 5.5, applePaint);
+    canvas.drawCircle(Offset(cx + 6, cy + 3), 5.0, applePaint);
     final Paint leafPaint = Paint()..color = const Color(0xFF22C55E);
-    canvas.drawCircle(Offset(cx + 7.5, cy - 3.5), 1.8, leafPaint);
+    canvas.drawCircle(Offset(cx + 6.5, cy - 3), 1.6, leafPaint);
   }
 
   void _drawShoppingIllustration(Canvas canvas, double cx, double cy) {
     // Shopping Bag
     final Paint bagPaint = Paint()..color = const Color(0xFFEC4899);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 2), width: 14, height: 15), const Radius.circular(2.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 2), width: 13, height: 14), const Radius.circular(2.5)),
       bagPaint,
     );
     final Paint handlePaint = Paint()
       ..color = const Color(0xFFFCE7F3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawArc(Rect.fromCenter(center: Offset(cx - 5, cy - 5), width: 8, height: 8), 3.14, 3.14, false, handlePaint);
+      ..strokeWidth = 1.4;
+    canvas.drawArc(Rect.fromCenter(center: Offset(cx - 5, cy - 4.5), width: 7, height: 7), 3.14, 3.14, false, handlePaint);
     // Gift Box
     final Paint boxPaint = Paint()..color = const Color(0xFF8B5CF6);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 3), width: 12, height: 12), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 3), width: 11, height: 11), const Radius.circular(2)),
       boxPaint,
     );
     final Paint ribbonPaint = Paint()..color = const Color(0xFFFBBF24);
-    canvas.drawRect(Rect.fromLTWH(cx + 6, cy - 3, 2, 12), ribbonPaint);
-    canvas.drawRect(Rect.fromLTWH(cx + 1, cy + 2, 12, 2), ribbonPaint);
+    canvas.drawRect(Rect.fromLTWH(cx + 5, cy - 2.5, 2, 11), ribbonPaint);
+    canvas.drawRect(Rect.fromLTWH(cx + 0.5, cy + 2, 11, 2), ribbonPaint);
   }
 
   void _drawTransportIllustration(Canvas canvas, double cx, double cy) {
     // Car body
     final Paint carPaint = Paint()..color = const Color(0xFF3B82F6);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 2, cy + 2), width: 22, height: 8), const Radius.circular(3)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 1, cy + 2), width: 20, height: 7.5), const Radius.circular(3)),
       carPaint,
     );
     final Paint roofPaint = Paint()..color = const Color(0xFF1D4ED8);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 1, cy - 2), width: 12, height: 5), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy - 2), width: 11, height: 4.5), const Radius.circular(2)),
       roofPaint,
     );
     // Wheels
     final Paint wheelPaint = Paint()..color = const Color(0xFF1E293B);
     final Paint hubPaint = Paint()..color = const Color(0xFFCBD5E1);
-    canvas.drawCircle(Offset(cx - 4, cy + 6), 3.0, wheelPaint);
-    canvas.drawCircle(Offset(cx - 4, cy + 6), 1.2, hubPaint);
-    canvas.drawCircle(Offset(cx + 8, cy + 6), 3.0, wheelPaint);
-    canvas.drawCircle(Offset(cx + 8, cy + 6), 1.2, hubPaint);
+    canvas.drawCircle(Offset(cx - 5, cy + 5.5), 2.8, wheelPaint);
+    canvas.drawCircle(Offset(cx - 5, cy + 5.5), 1.1, hubPaint);
+    canvas.drawCircle(Offset(cx + 6, cy + 5.5), 2.8, wheelPaint);
+    canvas.drawCircle(Offset(cx + 6, cy + 5.5), 1.1, hubPaint);
     // Speed streaks
     final Paint streakPaint = Paint()
       ..color = const Color(0xFF38BDF8)
-      ..strokeWidth = 1.2;
-    canvas.drawLine(Offset(cx - 14, cy), Offset(cx - 8, cy), streakPaint);
-    canvas.drawLine(Offset(cx - 12, cy + 3), Offset(cx - 7, cy + 3), streakPaint);
+      ..strokeWidth = 1.1;
+    canvas.drawLine(Offset(cx - 13, cy), Offset(cx - 8, cy), streakPaint);
+    canvas.drawLine(Offset(cx - 11, cy + 3), Offset(cx - 7, cy + 3), streakPaint);
+  }
+
+  void _drawHousingIllustration(Canvas canvas, double cx, double cy) {
+    // House base
+    final Paint wallPaint = Paint()..color = const Color(0xFF8B5CF6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 2.5), width: 14, height: 11), const Radius.circular(1.5)),
+      wallPaint,
+    );
+    // Roof triangle
+    final Path roof = Path()
+      ..moveTo(cx - 9, cy - 2)
+      ..lineTo(cx, cy - 9)
+      ..lineTo(cx + 9, cy - 2)
+      ..close();
+    final Paint roofPaint = Paint()..color = const Color(0xFF6D28D9);
+    canvas.drawPath(roof, roofPaint);
+    // Door
+    final Paint doorPaint = Paint()..color = const Color(0xFFFBBF24);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 5), width: 4.5, height: 6), const Radius.circular(1)),
+      doorPaint,
+    );
+    // Chimney
+    final Paint chimneyPaint = Paint()..color = const Color(0xFF4C1D95);
+    canvas.drawRect(Rect.fromLTWH(cx + 4, cy - 8, 3, 4), chimneyPaint);
   }
 
   void _drawBillsIllustration(Canvas canvas, double cx, double cy) {
     // Bill / Invoice sheet
     final Paint billBg = Paint()..color = const Color(0xFFF8FAFC);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 6, cy + 1), width: 14, height: 17), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 13, height: 16), const Radius.circular(2)),
       billBg,
     );
     final Paint linePaint = Paint()
       ..color = const Color(0xFF94A3B8)
       ..strokeWidth = 1.0;
-    canvas.drawLine(Offset(cx - 10, cy - 4), Offset(cx - 2, cy - 4), linePaint);
-    canvas.drawLine(Offset(cx - 10, cy), Offset(cx - 3, cy), linePaint);
-    canvas.drawLine(Offset(cx - 10, cy + 4), Offset(cx - 4, cy + 4), linePaint);
+    canvas.drawLine(Offset(cx - 9, cy - 4), Offset(cx - 1, cy - 4), linePaint);
+    canvas.drawLine(Offset(cx - 9, cy), Offset(cx - 2, cy), linePaint);
+    canvas.drawLine(Offset(cx - 9, cy + 4), Offset(cx - 3, cy + 4), linePaint);
 
     // Lightning bolt
     final Path bolt = Path()
-      ..moveTo(cx + 8, cy - 7)
-      ..lineTo(cx + 3, cy)
+      ..moveTo(cx + 7, cy - 7)
+      ..lineTo(cx + 2, cy)
+      ..lineTo(cx + 5, cy)
+      ..lineTo(cx + 3, cy + 8)
+      ..lineTo(cx + 9, cy)
       ..lineTo(cx + 6, cy)
-      ..lineTo(cx + 4, cy + 8)
-      ..lineTo(cx + 10, cy)
-      ..lineTo(cx + 7, cy)
       ..close();
     final Paint boltPaint = Paint()..color = const Color(0xFFF59E0B);
     canvas.drawPath(bolt, boltPaint);
@@ -492,60 +561,91 @@ class _CategoryBannerPainter extends CustomPainter {
     // Popcorn cup
     final Paint cupPaint = Paint()..color = const Color(0xFFEF4444);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 3), width: 13, height: 14), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 3), width: 12, height: 13), const Radius.circular(2)),
       cupPaint,
     );
     // Popcorn kernels
     final Paint popPaint = Paint()..color = const Color(0xFFFDE047);
-    canvas.drawCircle(Offset(cx - 8, cy - 4), 2.5, popPaint);
-    canvas.drawCircle(Offset(cx - 5, cy - 5.5), 3.0, popPaint);
-    canvas.drawCircle(Offset(cx - 2, cy - 4), 2.5, popPaint);
+    canvas.drawCircle(Offset(cx - 8, cy - 4), 2.3, popPaint);
+    canvas.drawCircle(Offset(cx - 5, cy - 5.5), 2.8, popPaint);
+    canvas.drawCircle(Offset(cx - 2, cy - 4), 2.3, popPaint);
     // Movie ticket
     final Paint ticketPaint = Paint()..color = const Color(0xFF8B5CF6);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 2), width: 12, height: 11), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 2), width: 11, height: 11), const Radius.circular(2)),
       ticketPaint,
     );
     final Paint starPaint = Paint()..color = const Color(0xFFFEF08A);
-    canvas.drawCircle(Offset(cx + 7, cy + 2), 2.0, starPaint);
+    canvas.drawCircle(Offset(cx + 6, cy + 2), 1.8, starPaint);
   }
 
   void _drawHealthIllustration(Canvas canvas, double cx, double cy) {
     // Red cross box
     final Paint boxPaint = Paint()..color = const Color(0xFFEF4444);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 14, height: 13), const Radius.circular(3)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 4, cy + 1), width: 13, height: 12), const Radius.circular(2.5)),
       boxPaint,
     );
     final Paint crossPaint = Paint()..color = Colors.white;
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 7, height: 2.2), crossPaint);
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 2.2, height: 7), crossPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 4, cy + 1), width: 6.5, height: 2.0), crossPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 4, cy + 1), width: 2.0, height: 6.5), crossPaint);
     // Capsule pill
     final Paint pillCyan = Paint()..color = const Color(0xFF06B6D4);
     final Paint pillWhite = Paint()..color = Colors.white;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 3, cy - 1, 6, 6.5), const Radius.circular(2)), pillCyan);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 9, cy - 1, 6, 6.5), const Radius.circular(2)), pillWhite);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 3, cy - 1, 5.5, 6), const Radius.circular(1.8)), pillCyan);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 8.5, cy - 1, 5.5, 6), const Radius.circular(1.8)), pillWhite);
+  }
+
+  void _drawEducationIllustration(Canvas canvas, double cx, double cy) {
+    // Graduation cap diamond
+    final Path cap = Path()
+      ..moveTo(cx, cy - 6)
+      ..lineTo(cx + 9, cy - 2)
+      ..lineTo(cx, cy + 2)
+      ..lineTo(cx - 9, cy - 2)
+      ..close();
+    final Paint capPaint = Paint()..color = const Color(0xFF4F46E5);
+    canvas.drawPath(cap, capPaint);
+    // Skullcap base
+    final Path skull = Path()
+      ..moveTo(cx - 5, cy)
+      ..quadraticBezierTo(cx, cy + 6, cx + 5, cy)
+      ..close();
+    final Paint skullPaint = Paint()..color = const Color(0xFF3730A3);
+    canvas.drawPath(skull, skullPaint);
+    // Tassel
+    final Paint tasselPaint = Paint()
+      ..color = const Color(0xFFF59E0B)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(Offset(cx, cy - 2), Offset(cx + 8, cy + 3), tasselPaint);
+    // Mini open book below
+    final Paint bookPaint = Paint()..color = const Color(0xFFE0E7FF);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 6.5), width: 13, height: 3), const Radius.circular(1)),
+      bookPaint,
+    );
   }
 
   void _drawTravelIllustration(Canvas canvas, double cx, double cy) {
     // Jet Airplane
     final Path plane = Path()
-      ..moveTo(cx + 7, cy - 7)
-      ..lineTo(cx + 10, cy - 6)
-      ..lineTo(cx + 3, cy + 6)
-      ..lineTo(cx - 3, cy + 4)
-      ..lineTo(cx - 8, cy + 7)
-      ..lineTo(cx - 6, cy + 3)
-      ..lineTo(cx - 10, cy - 2)
-      ..lineTo(cx - 7, cy - 2)
+      ..moveTo(cx + 6, cy - 6)
+      ..lineTo(cx + 9, cy - 5)
+      ..lineTo(cx + 3, cy + 5)
+      ..lineTo(cx - 3, cy + 3)
+      ..lineTo(cx - 7, cy + 6)
+      ..lineTo(cx - 5, cy + 2)
+      ..lineTo(cx - 9, cy - 2)
+      ..lineTo(cx - 6, cy - 2)
       ..close();
     final Paint planePaint = Paint()..color = const Color(0xFF0284C7);
     canvas.drawPath(plane, planePaint);
     // Clouds
     final Paint cloudPaint = Paint()..color = isDark ? const Color(0x66FFFFFF) : const Color(0xEEFFFFFF);
-    canvas.drawCircle(Offset(cx - 5, cy + 5), 3.5, cloudPaint);
-    canvas.drawCircle(Offset(cx - 1, cy + 4), 4.5, cloudPaint);
-    canvas.drawCircle(Offset(cx + 4, cy + 6), 3.0, cloudPaint);
+    canvas.drawCircle(Offset(cx - 5, cy + 4), 3.0, cloudPaint);
+    canvas.drawCircle(Offset(cx - 1, cy + 3.5), 4.0, cloudPaint);
+    canvas.drawCircle(Offset(cx + 4, cy + 5), 2.5, cloudPaint);
   }
 
   void _drawSavingsIllustration(Canvas canvas, double cx, double cy) {
@@ -553,34 +653,35 @@ class _CategoryBannerPainter extends CustomPainter {
     final Paint goldPaint = Paint()..color = const Color(0xFFF59E0B);
     final Paint shinePaint = Paint()..color = const Color(0xFFFDE047);
     for (int i = 0; i < 3; i++) {
-      final double dy = cy + 4 - (i * 3.5);
-      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 6, dy), width: 12, height: 4.5), goldPaint);
-      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 6, dy - 0.5), width: 10, height: 3), shinePaint);
+      final double dy = cy + 4 - (i * 3.2);
+      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 5, dy), width: 11, height: 4), goldPaint);
+      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 5, dy - 0.5), width: 9, height: 2.5), shinePaint);
     }
     // Banknote
     final Paint billPaint = Paint()..color = const Color(0xFF10B981);
-    final RRect bill = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 1), width: 15, height: 10), const Radius.circular(2));
+    final RRect bill = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 1), width: 14, height: 9), const Radius.circular(2));
     canvas.drawRRect(bill, billPaint);
     final Paint billCircle = Paint()..color = const Color(0xFFA7F3D0);
-    canvas.drawCircle(Offset(cx + 7, cy + 1), 2.2, billCircle);
+    canvas.drawCircle(Offset(cx + 6, cy + 1), 2.0, billCircle);
   }
 
-  void _drawDefaultIllustration(Canvas canvas, double cx, double cy, Color catColor) {
-    // Dual-tone circular badge
-    final Paint ringPaint = Paint()..color = catColor.withValues(alpha: isDark ? 0.35 : 0.18);
-    canvas.drawCircle(Offset(cx + 1, cy), 11, ringPaint);
-
-    final Paint innerPaint = Paint()..color = catColor.withValues(alpha: isDark ? 0.9 : 0.85);
-    canvas.drawCircle(Offset(cx + 1, cy), 8.5, innerPaint);
-
-    final TextPainter tp = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(category.iconCodePoint),
-        style: TextStyle(fontFamily: category.icon.fontFamily, package: category.icon.fontPackage, fontSize: 11, color: Colors.white),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(cx + 1 - (tp.width / 2), cy - (tp.height / 2)));
+  void _drawGeneralIllustration(Canvas canvas, double cx, double cy, Color catColor) {
+    // Elegant payment card / badge vignette (pure artwork illustration, NOT an icon)
+    final Paint cardBg = Paint()..color = catColor.withValues(alpha: isDark ? 0.85 : 0.75);
+    final RRect card = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 1, cy + 1), width: 16, height: 11), const Radius.circular(2.5));
+    canvas.drawRRect(card, cardBg);
+    // Chip
+    final Paint chipPaint = Paint()..color = const Color(0xFFFDE047);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx - 7, cy - 1, 4.0, 3.0), const Radius.circular(0.8)), chipPaint);
+    // Magnetic / accent line
+    final Paint linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.6)
+      ..strokeWidth = 1.1;
+    canvas.drawLine(Offset(cx - 7, cy + 3.5), Offset(cx + 5, cy + 3.5), linePaint);
+    // Sparkle star near top right
+    final Paint starPaint = Paint()..color = const Color(0xFF38BDF8);
+    canvas.drawCircle(Offset(cx + 7, cy - 4), 1.6, starPaint);
+    canvas.drawCircle(Offset(cx + 5, cy - 6), 0.9, starPaint);
   }
 
   @override
