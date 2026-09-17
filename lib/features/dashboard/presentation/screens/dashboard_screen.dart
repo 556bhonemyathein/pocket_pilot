@@ -51,26 +51,23 @@ class DashboardScreen extends ConsumerWidget {
             pinned: false,
             toolbarHeight: 64,
             titleSpacing: AppSpacing.page,
-            backgroundColor: const Color(0xFF0152B8),
-            systemOverlayStyle: SystemUiOverlayStyle.light,
+            backgroundColor: context.isDark ? context.colors.surface : Colors.white,
+            surfaceTintColor: Colors.transparent,
+            systemOverlayStyle: context.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
             elevation: 0,
-            flexibleSpace: const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[Color(0xFF003E8A), Color(0xFF0152B8), Color(0xFF0B63E5)],
-                ),
-              ),
-              child: CustomPaint(painter: _StarlightPainter()),
-            ),
+            flexibleSpace: DecoratedBox(decoration: BoxDecoration(color: context.isDark ? context.colors.surface : Colors.white)),
             title: Row(
               children: <Widget>[
                 const _AvatarButton(),
                 AppSpacing.sm.gapW,
                 Text(
                   ref.watch(greetingTimeOfDayProvider),
-                  style: context.text.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: -0.2),
+                  style: context.text.titleSmall?.copyWith(
+                    color: context.isDark ? Colors.white : const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    letterSpacing: -0.2,
+                  ),
                 ),
                 AppSpacing.md.gapW,
                 const Expanded(child: _CapsuleSearchBar()),
@@ -146,14 +143,21 @@ class _AvatarButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppUser? user = ref.watch(currentUserProvider);
+    final bool isDark = context.isDark;
 
     return GestureDetector(
       onTap: () => context.go(AppRoutes.profile),
       child: DecoratedBox(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 1.5),
-          boxShadow: <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))],
+          border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0), width: 1.5),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: UserAvatar(avatarUrl: user?.avatarUrl, name: user?.name, radius: 17, heroTag: 'dashboard-avatar'),
       ),
@@ -170,7 +174,7 @@ class _CapsuleSearchBar extends StatefulWidget {
 }
 
 class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
-  static const List<String> _hints = <String>['SP Bakery', 'Coffee & Tea', 'City Mart', 'Groceries', 'Food & Dining', 'Search transactions...'];
+  static const List<String> _hints = <String>['SP Bakery', 'City Mart', 'Coffee & Tea', 'Groceries', 'Snacks', 'Search...'];
 
   int _index = 0;
   Timer? _timer;
@@ -195,41 +199,38 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = context.isDark;
+    final Color capsuleBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
+    final Color textColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final Color iconColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7);
+
     return GestureDetector(
       onTap: () => context.go('${AppRoutes.transactions}/${AppRoutes.search}'),
       child: Container(
         height: 38,
         decoration: BoxDecoration(
+          color: capsuleBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
-          boxShadow: <BoxShadow>[BoxShadow(color: const Color(0xFF00E5FF).withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 0.5)],
+          boxShadow: <BoxShadow>[BoxShadow(color: const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.25 : 0.12), blurRadius: 8, spreadRadius: 0.5)],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: Stack(
             fit: StackFit.expand,
             children: <Widget>[
-              // Base capsule background
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: <Color>[Color(0xFF00326D), Color(0xFF004994), Color(0xFF095CB5), Color(0xFF0284C7)],
-                  ),
-                ),
-              ),
-
               // Banner illustration artwork
-              const CustomPaint(painter: _CapsuleBannerPainter()),
+              CustomPaint(
+                painter: _CapsuleBannerPainter(fadeColor: capsuleBg, isDark: isDark),
+              ),
 
               // Content row
               Padding(
-                padding: const EdgeInsets.only(left: 14, right: 10),
+                padding: const EdgeInsets.only(left: 12, right: 10),
                 child: Row(
                   children: <Widget>[
                     SizedBox(
-                      width: 84,
+                      width: 80,
                       child: AnimatedSwitcher(
                         duration: 300.ms,
                         layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
@@ -252,12 +253,12 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
                           key: ValueKey<int>(_index),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+                          style: TextStyle(color: textColor, fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: -0.2),
                         ),
                       ),
                     ),
                     const Spacer(),
-                    const Icon(Icons.search_rounded, color: Colors.white, size: 21),
+                    Icon(Icons.search_rounded, color: iconColor, size: 21),
                   ],
                 ),
               ),
@@ -269,41 +270,12 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
   }
 }
 
-/// Paints subtle starlight dust particles across the top appbar background.
-class _StarlightPainter extends CustomPainter {
-  const _StarlightPainter();
-
-  static const List<Offset> _stars = <Offset>[
-    Offset(0.06, 0.22),
-    Offset(0.14, 0.65),
-    Offset(0.24, 0.18),
-    Offset(0.32, 0.80),
-    Offset(0.42, 0.28),
-    Offset(0.52, 0.68),
-    Offset(0.64, 0.20),
-    Offset(0.74, 0.74),
-    Offset(0.84, 0.32),
-    Offset(0.92, 0.60),
-    Offset(0.96, 0.16),
-  ];
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint starPaint = Paint()..color = Colors.white.withValues(alpha: 0.35);
-    for (int i = 0; i < _stars.length; i++) {
-      final Offset rel = _stars[i];
-      final double r = (i % 3 == 0) ? 1.5 : ((i % 2 == 0) ? 1.1 : 0.8);
-      canvas.drawCircle(Offset(rel.dx * size.width, rel.dy * size.height), r, starPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 /// Illustrates the warm banner motif on the right side of the capsule search bar.
 class _CapsuleBannerPainter extends CustomPainter {
-  const _CapsuleBannerPainter();
+  const _CapsuleBannerPainter({required this.fadeColor, required this.isDark});
+
+  final Color fadeColor;
+  final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -311,62 +283,62 @@ class _CapsuleBannerPainter extends CustomPainter {
     final double h = size.height;
 
     // Right-half warm ambient bakery/store glow
-    final Rect glowRect = Rect.fromLTWH(w * 0.40, 0, w * 0.60, h);
+    final Rect glowRect = Rect.fromLTWH(w * 0.48, 0, w * 0.52, h);
     final Paint glowPaint = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: <Color>[Colors.transparent, Color(0x33F59E0B), Color(0x88FB923C), Color(0xAA38BDF8)],
-        stops: <double>[0.0, 0.25, 0.65, 1.0],
+        colors: <Color>[Colors.transparent, const Color(0x22F59E0B), const Color(0x44FB923C), Color(isDark ? 0x6638BDF8 : 0x2238BDF8)],
+        stops: const <double>[0.0, 0.25, 0.65, 1.0],
       ).createShader(glowRect);
     canvas.drawRect(glowRect, glowPaint);
 
     // Warm bakery / merchant box on the right
     final Paint boxPaint = Paint()..color = const Color(0xFFF97316);
-    final RRect box = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.54, h * 0.62), width: 16, height: 15), const Radius.circular(3.5));
+    final RRect box = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.59, h * 0.62), width: 14, height: 13), const Radius.circular(3.5));
     canvas.drawRRect(box, boxPaint);
 
     // Mini box lid
     final Paint lidPaint = Paint()..color = const Color(0xFFEA580C);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.54, h * 0.54), width: 17, height: 4), const Radius.circular(1.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.59, h * 0.54), width: 15, height: 3.5), const Radius.circular(1.5)),
       lidPaint,
     );
 
     // Character with round glasses
-    final Offset headCenter = Offset(w * 0.67, h * 0.48);
+    final Offset headCenter = Offset(w * 0.71, h * 0.48);
     // Shirt
     final Paint shirtPaint = Paint()..color = const Color(0xFF10B981);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(headCenter.dx, h * 0.82), width: 17, height: 13), const Radius.circular(5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(headCenter.dx, h * 0.82), width: 15, height: 12), const Radius.circular(5)),
       shirtPaint,
     );
     // Face
     final Paint facePaint = Paint()..color = const Color(0xFFFED7AA);
-    canvas.drawCircle(headCenter, 6.5, facePaint);
+    canvas.drawCircle(headCenter, 6.0, facePaint);
     // Hair
     final Paint hairPaint = Paint()..color = const Color(0xFF334155);
-    canvas.drawArc(Rect.fromCircle(center: Offset(headCenter.dx, headCenter.dy - 1), radius: 6.8), 3.14, 3.14, true, hairPaint);
+    canvas.drawArc(Rect.fromCircle(center: Offset(headCenter.dx, headCenter.dy - 1), radius: 6.3), 3.14, 3.14, true, hairPaint);
     // Round glasses
     final Paint glassesPaint = Paint()
       ..color = const Color(0xFF1E293B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
-    canvas.drawCircle(Offset(headCenter.dx - 2.4, headCenter.dy), 2.1, glassesPaint);
-    canvas.drawCircle(Offset(headCenter.dx + 2.4, headCenter.dy), 2.1, glassesPaint);
+    canvas.drawCircle(Offset(headCenter.dx - 2.2, headCenter.dy), 2.0, glassesPaint);
+    canvas.drawCircle(Offset(headCenter.dx + 2.2, headCenter.dy), 2.0, glassesPaint);
     canvas.drawLine(Offset(headCenter.dx - 0.3, headCenter.dy), Offset(headCenter.dx + 0.3, headCenter.dy), glassesPaint);
 
     // Mini smartphone illustration on the right
-    final Paint phoneBody = Paint()..color = const Color(0xFFF1F5F9);
+    final Paint phoneBody = Paint()..color = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
     final RRect phone = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(w * 0.79, h * 0.50), width: 12, height: 19),
+      Rect.fromCenter(center: Offset(w * 0.82, h * 0.50), width: 11, height: 17),
       const Radius.circular(2.5),
     );
     canvas.drawRRect(phone, phoneBody);
 
     final Paint screen = Paint()..color = const Color(0xFF38BDF8);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.79, h * 0.50), width: 9, height: 13), const Radius.circular(1.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.82, h * 0.50), width: 8, height: 12), const Radius.circular(1.5)),
       screen,
     );
 
@@ -374,26 +346,30 @@ class _CapsuleBannerPainter extends CustomPainter {
     final TextPainter tp = TextPainter(
       text: TextSpan(
         text: 'မုန့်နှင့်အစားအစာ',
-        style: TextStyle(color: Colors.white.withValues(alpha: 0.36), fontSize: 7.5, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: isDark ? Colors.white.withValues(alpha: 0.4) : const Color(0xFF64748B).withValues(alpha: 0.6),
+          fontSize: 7.0,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, Offset(w * 0.46, h * 0.06));
+    tp.paint(canvas, Offset(w * 0.52, h * 0.06));
 
     // Left fade mask so text on the left is 100% crisp and readable
-    final Rect fadeRect = Rect.fromLTWH(0, 0, w * 0.50, h);
+    final Rect fadeRect = Rect.fromLTWH(0, 0, w * 0.53, h);
     final Paint fadePaint = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: <Color>[Color(0xFF00326D), Color(0xEE00326D), Colors.transparent],
-        stops: <double>[0.0, 0.75, 1.0],
+        colors: <Color>[fadeColor, fadeColor.withValues(alpha: 0.85), Colors.transparent],
+        stops: const <double>[0.0, 0.75, 1.0],
       ).createShader(fadeRect);
     canvas.drawRect(fadeRect, fadePaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CapsuleBannerPainter oldDelegate) => oldDelegate.fadeColor != fadeColor || oldDelegate.isDark != isDark;
 }
 
 /// Shortcuts to the three ways of adding money movement.
