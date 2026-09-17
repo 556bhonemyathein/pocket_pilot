@@ -13,9 +13,12 @@ import '../../../../core/widgets/app_state_views.dart';
 import '../../../../core/widgets/glass_panel.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../shared/models/app_user.dart';
+import '../../../../shared/models/category.dart';
 import '../../../../shared/models/enums.dart';
 import '../../../../shared/models/transaction.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../categories/data/default_categories.dart';
+import '../../../categories/presentation/providers/category_providers.dart';
 import '../../../reports/presentation/widgets/charts.dart';
 import '../../../transactions/domain/transaction_repository.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
@@ -165,17 +168,15 @@ class _AvatarButton extends ConsumerWidget {
   }
 }
 
-/// Stadium / capsule search bar with neon border, banner illustration and cycling keywords.
-class _CapsuleSearchBar extends StatefulWidget {
+/// Stadium / capsule search bar with neon border, dynamic category names, and matching illustrations.
+class _CapsuleSearchBar extends ConsumerStatefulWidget {
   const _CapsuleSearchBar();
 
   @override
-  State<_CapsuleSearchBar> createState() => _CapsuleSearchBarState();
+  ConsumerState<_CapsuleSearchBar> createState() => _CapsuleSearchBarState();
 }
 
-class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
-  static const List<String> _hints = <String>['SP Bakery', 'City Mart', 'Coffee & Tea', 'Groceries', 'Snacks', 'Search...'];
-
+class _CapsuleSearchBarState extends ConsumerState<_CapsuleSearchBar> {
   int _index = 0;
   Timer? _timer;
 
@@ -185,7 +186,7 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
     _timer = Timer.periodic(const Duration(milliseconds: 3500), (_) {
       if (mounted) {
         setState(() {
-          _index = (_index + 1) % _hints.length;
+          _index++;
         });
       }
     });
@@ -204,6 +205,11 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
     final Color textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final Color iconColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7);
 
+    final List<Category> allCategories = ref.watch(categoriesProvider).value ?? DefaultCategories.build();
+    final List<Category> expenseCategories = allCategories.where((Category c) => c.kind != CategoryKind.income).toList();
+    final List<Category> displayList = expenseCategories.isNotEmpty ? expenseCategories : allCategories;
+    final Category currentCategory = displayList.isNotEmpty ? displayList[_index % displayList.length] : Category.unknown;
+
     return GestureDetector(
       onTap: () => context.go('${AppRoutes.transactions}/${AppRoutes.search}'),
       child: Container(
@@ -219,9 +225,18 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
           child: Stack(
             fit: StackFit.expand,
             children: <Widget>[
-              // Banner illustration artwork
-              CustomPaint(
-                painter: _CapsuleBannerPainter(fadeColor: capsuleBg, isDark: isDark),
+              // Themed category illustration artwork and glow
+              AnimatedSwitcher(
+                duration: 350.ms,
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: SizedBox.expand(
+                  key: ValueKey<String>(currentCategory.id),
+                  child: CustomPaint(
+                    painter: _CategoryBannerPainter(category: currentCategory, fadeColor: capsuleBg, isDark: isDark),
+                  ),
+                ),
               ),
 
               // Content row
@@ -230,7 +245,7 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
                 child: Row(
                   children: <Widget>[
                     SizedBox(
-                      width: 80,
+                      width: 86,
                       child: AnimatedSwitcher(
                         duration: 300.ms,
                         layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
@@ -248,12 +263,15 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
                             ),
                           );
                         },
-                        child: Text(
-                          _hints[_index],
-                          key: ValueKey<int>(_index),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: textColor, fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+                        child: FittedBox(
+                          key: ValueKey<String>(currentCategory.id),
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            currentCategory.name,
+                            maxLines: 1,
+                            style: TextStyle(color: textColor, fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+                          ),
                         ),
                       ),
                     ),
@@ -270,10 +288,11 @@ class _CapsuleSearchBarState extends State<_CapsuleSearchBar> {
   }
 }
 
-/// Illustrates the warm banner motif on the right side of the capsule search bar.
-class _CapsuleBannerPainter extends CustomPainter {
-  const _CapsuleBannerPainter({required this.fadeColor, required this.isDark});
+/// Illustrates artwork belonging specifically to the active category in the capsule search bar.
+class _CategoryBannerPainter extends CustomPainter {
+  const _CategoryBannerPainter({required this.category, required this.fadeColor, required this.isDark});
 
+  final Category category;
   final Color fadeColor;
   final bool isDark;
 
@@ -281,83 +300,53 @@ class _CapsuleBannerPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
+    final double cx = w * 0.70;
+    final double cy = h * 0.50;
 
-    // Right-half warm ambient bakery/store glow
-    final Rect glowRect = Rect.fromLTWH(w * 0.48, 0, w * 0.52, h);
+    final String name = category.name.toLowerCase();
+    final Color catColor = category.color;
+
+    // Category-themed ambient glow on the right
+    final Rect glowRect = Rect.fromLTWH(w * 0.44, 0, w * 0.56, h);
     final Paint glowPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: <Color>[Colors.transparent, const Color(0x22F59E0B), const Color(0x44FB923C), Color(isDark ? 0x6638BDF8 : 0x2238BDF8)],
-        stops: const <double>[0.0, 0.25, 0.65, 1.0],
+        colors: <Color>[
+          Colors.transparent,
+          catColor.withValues(alpha: 0.12),
+          catColor.withValues(alpha: isDark ? 0.35 : 0.22),
+          catColor.withValues(alpha: isDark ? 0.45 : 0.28),
+        ],
+        stops: const <double>[0.0, 0.35, 0.75, 1.0],
       ).createShader(glowRect);
     canvas.drawRect(glowRect, glowPaint);
 
-    // Warm bakery / merchant box on the right
-    final Paint boxPaint = Paint()..color = const Color(0xFFF97316);
-    final RRect box = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.59, h * 0.62), width: 14, height: 13), const Radius.circular(3.5));
-    canvas.drawRRect(box, boxPaint);
-
-    // Mini box lid
-    final Paint lidPaint = Paint()..color = const Color(0xFFEA580C);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.59, h * 0.54), width: 15, height: 3.5), const Radius.circular(1.5)),
-      lidPaint,
-    );
-
-    // Character with round glasses
-    final Offset headCenter = Offset(w * 0.71, h * 0.48);
-    // Shirt
-    final Paint shirtPaint = Paint()..color = const Color(0xFF10B981);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(headCenter.dx, h * 0.82), width: 15, height: 12), const Radius.circular(5)),
-      shirtPaint,
-    );
-    // Face
-    final Paint facePaint = Paint()..color = const Color(0xFFFED7AA);
-    canvas.drawCircle(headCenter, 6.0, facePaint);
-    // Hair
-    final Paint hairPaint = Paint()..color = const Color(0xFF334155);
-    canvas.drawArc(Rect.fromCircle(center: Offset(headCenter.dx, headCenter.dy - 1), radius: 6.3), 3.14, 3.14, true, hairPaint);
-    // Round glasses
-    final Paint glassesPaint = Paint()
-      ..color = const Color(0xFF1E293B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-    canvas.drawCircle(Offset(headCenter.dx - 2.2, headCenter.dy), 2.0, glassesPaint);
-    canvas.drawCircle(Offset(headCenter.dx + 2.2, headCenter.dy), 2.0, glassesPaint);
-    canvas.drawLine(Offset(headCenter.dx - 0.3, headCenter.dy), Offset(headCenter.dx + 0.3, headCenter.dy), glassesPaint);
-
-    // Mini smartphone illustration on the right
-    final Paint phoneBody = Paint()..color = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-    final RRect phone = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(w * 0.82, h * 0.50), width: 11, height: 17),
-      const Radius.circular(2.5),
-    );
-    canvas.drawRRect(phone, phoneBody);
-
-    final Paint screen = Paint()..color = const Color(0xFF38BDF8);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w * 0.82, h * 0.50), width: 8, height: 12), const Radius.circular(1.5)),
-      screen,
-    );
-
-    // Decorative script in Burmese ("မုန့်နှင့်အစားအစာ")
-    final TextPainter tp = TextPainter(
-      text: TextSpan(
-        text: 'မုန့်နှင့်အစားအစာ',
-        style: TextStyle(
-          color: isDark ? Colors.white.withValues(alpha: 0.4) : const Color(0xFF64748B).withValues(alpha: 0.6),
-          fontSize: 7.0,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(w * 0.52, h * 0.06));
+    // Draw illustration corresponding to category
+    if (name.contains('food') || name.contains('drink') || name.contains('restaurant') || name.contains('dining') || name.contains('cafe')) {
+      _drawFoodIllustration(canvas, cx, cy);
+    } else if (name.contains('grocer') || name.contains('market')) {
+      _drawGroceriesIllustration(canvas, cx, cy);
+    } else if (name.contains('shop') || name.contains('cloth') || name.contains('gift')) {
+      _drawShoppingIllustration(canvas, cx, cy);
+    } else if (name.contains('transport') || name.contains('car') || name.contains('fuel') || name.contains('transit')) {
+      _drawTransportIllustration(canvas, cx, cy);
+    } else if (name.contains('bill') || name.contains('utilit') || name.contains('power') || name.contains('electric')) {
+      _drawBillsIllustration(canvas, cx, cy);
+    } else if (name.contains('entertain') || name.contains('movie') || name.contains('cinema') || name.contains('game')) {
+      _drawEntertainmentIllustration(canvas, cx, cy);
+    } else if (name.contains('health') || name.contains('medic') || name.contains('doctor') || name.contains('pharm')) {
+      _drawHealthIllustration(canvas, cx, cy);
+    } else if (name.contains('travel') || name.contains('flight') || name.contains('trip') || name.contains('hotel')) {
+      _drawTravelIllustration(canvas, cx, cy);
+    } else if (name.contains('salar') || name.contains('saving') || name.contains('invest') || name.contains('income')) {
+      _drawSavingsIllustration(canvas, cx, cy);
+    } else {
+      _drawDefaultIllustration(canvas, cx, cy, catColor);
+    }
 
     // Left fade mask so text on the left is 100% crisp and readable
-    final Rect fadeRect = Rect.fromLTWH(0, 0, w * 0.53, h);
+    final Rect fadeRect = Rect.fromLTWH(0, 0, w * 0.52, h);
     final Paint fadePaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.centerLeft,
@@ -368,8 +357,235 @@ class _CapsuleBannerPainter extends CustomPainter {
     canvas.drawRect(fadeRect, fadePaint);
   }
 
+  void _drawFoodIllustration(Canvas canvas, double cx, double cy) {
+    // Steaming coffee / drink cup
+    final Paint cupPaint = Paint()..color = const Color(0xFFF97316);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 7, cy + 2), width: 12, height: 11), const Radius.circular(2.5)),
+      cupPaint,
+    );
+    final Paint saucerPaint = Paint()..color = const Color(0xFFEA580C);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 7, cy + 7.5), width: 14, height: 2), const Radius.circular(1)),
+      saucerPaint,
+    );
+    // Burger
+    final Paint bunPaint = Paint()..color = const Color(0xFFF59E0B);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy - 2), width: 14, height: 5), const Radius.circular(2.5)),
+      bunPaint,
+    );
+    final Paint lettucePaint = Paint()..color = const Color(0xFF10B981);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 1), width: 14, height: 2), const Radius.circular(1)),
+      lettucePaint,
+    );
+    final Paint pattyPaint = Paint()..color = const Color(0xFF78350F);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 3.5), width: 14, height: 2.5), const Radius.circular(1)),
+      pattyPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 6.5), width: 13, height: 3), const Radius.circular(1.5)),
+      bunPaint,
+    );
+  }
+
+  void _drawGroceriesIllustration(Canvas canvas, double cx, double cy) {
+    // Grocery bag
+    final Paint bagPaint = Paint()..color = const Color(0xFFD97706);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 4, cy + 3), width: 14, height: 15), const Radius.circular(2.5)),
+      bagPaint,
+    );
+    // Bread stick poking out
+    final Paint breadPaint = Paint()..color = const Color(0xFFFBBF24);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 6, cy - 4), width: 4.5, height: 10), const Radius.circular(2)),
+      breadPaint,
+    );
+    // Fresh Apple
+    final Paint applePaint = Paint()..color = const Color(0xFFEF4444);
+    canvas.drawCircle(Offset(cx + 7, cy + 3), 5.5, applePaint);
+    final Paint leafPaint = Paint()..color = const Color(0xFF22C55E);
+    canvas.drawCircle(Offset(cx + 7.5, cy - 3.5), 1.8, leafPaint);
+  }
+
+  void _drawShoppingIllustration(Canvas canvas, double cx, double cy) {
+    // Shopping Bag
+    final Paint bagPaint = Paint()..color = const Color(0xFFEC4899);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 2), width: 14, height: 15), const Radius.circular(2.5)),
+      bagPaint,
+    );
+    final Paint handlePaint = Paint()
+      ..color = const Color(0xFFFCE7F3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawArc(Rect.fromCenter(center: Offset(cx - 5, cy - 5), width: 8, height: 8), 3.14, 3.14, false, handlePaint);
+    // Gift Box
+    final Paint boxPaint = Paint()..color = const Color(0xFF8B5CF6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 3), width: 12, height: 12), const Radius.circular(2)),
+      boxPaint,
+    );
+    final Paint ribbonPaint = Paint()..color = const Color(0xFFFBBF24);
+    canvas.drawRect(Rect.fromLTWH(cx + 6, cy - 3, 2, 12), ribbonPaint);
+    canvas.drawRect(Rect.fromLTWH(cx + 1, cy + 2, 12, 2), ribbonPaint);
+  }
+
+  void _drawTransportIllustration(Canvas canvas, double cx, double cy) {
+    // Car body
+    final Paint carPaint = Paint()..color = const Color(0xFF3B82F6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 2, cy + 2), width: 22, height: 8), const Radius.circular(3)),
+      carPaint,
+    );
+    final Paint roofPaint = Paint()..color = const Color(0xFF1D4ED8);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 1, cy - 2), width: 12, height: 5), const Radius.circular(2)),
+      roofPaint,
+    );
+    // Wheels
+    final Paint wheelPaint = Paint()..color = const Color(0xFF1E293B);
+    final Paint hubPaint = Paint()..color = const Color(0xFFCBD5E1);
+    canvas.drawCircle(Offset(cx - 4, cy + 6), 3.0, wheelPaint);
+    canvas.drawCircle(Offset(cx - 4, cy + 6), 1.2, hubPaint);
+    canvas.drawCircle(Offset(cx + 8, cy + 6), 3.0, wheelPaint);
+    canvas.drawCircle(Offset(cx + 8, cy + 6), 1.2, hubPaint);
+    // Speed streaks
+    final Paint streakPaint = Paint()
+      ..color = const Color(0xFF38BDF8)
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(cx - 14, cy), Offset(cx - 8, cy), streakPaint);
+    canvas.drawLine(Offset(cx - 12, cy + 3), Offset(cx - 7, cy + 3), streakPaint);
+  }
+
+  void _drawBillsIllustration(Canvas canvas, double cx, double cy) {
+    // Bill / Invoice sheet
+    final Paint billBg = Paint()..color = const Color(0xFFF8FAFC);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 6, cy + 1), width: 14, height: 17), const Radius.circular(2)),
+      billBg,
+    );
+    final Paint linePaint = Paint()
+      ..color = const Color(0xFF94A3B8)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(Offset(cx - 10, cy - 4), Offset(cx - 2, cy - 4), linePaint);
+    canvas.drawLine(Offset(cx - 10, cy), Offset(cx - 3, cy), linePaint);
+    canvas.drawLine(Offset(cx - 10, cy + 4), Offset(cx - 4, cy + 4), linePaint);
+
+    // Lightning bolt
+    final Path bolt = Path()
+      ..moveTo(cx + 8, cy - 7)
+      ..lineTo(cx + 3, cy)
+      ..lineTo(cx + 6, cy)
+      ..lineTo(cx + 4, cy + 8)
+      ..lineTo(cx + 10, cy)
+      ..lineTo(cx + 7, cy)
+      ..close();
+    final Paint boltPaint = Paint()..color = const Color(0xFFF59E0B);
+    canvas.drawPath(bolt, boltPaint);
+  }
+
+  void _drawEntertainmentIllustration(Canvas canvas, double cx, double cy) {
+    // Popcorn cup
+    final Paint cupPaint = Paint()..color = const Color(0xFFEF4444);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 3), width: 13, height: 14), const Radius.circular(2)),
+      cupPaint,
+    );
+    // Popcorn kernels
+    final Paint popPaint = Paint()..color = const Color(0xFFFDE047);
+    canvas.drawCircle(Offset(cx - 8, cy - 4), 2.5, popPaint);
+    canvas.drawCircle(Offset(cx - 5, cy - 5.5), 3.0, popPaint);
+    canvas.drawCircle(Offset(cx - 2, cy - 4), 2.5, popPaint);
+    // Movie ticket
+    final Paint ticketPaint = Paint()..color = const Color(0xFF8B5CF6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 2), width: 12, height: 11), const Radius.circular(2)),
+      ticketPaint,
+    );
+    final Paint starPaint = Paint()..color = const Color(0xFFFEF08A);
+    canvas.drawCircle(Offset(cx + 7, cy + 2), 2.0, starPaint);
+  }
+
+  void _drawHealthIllustration(Canvas canvas, double cx, double cy) {
+    // Red cross box
+    final Paint boxPaint = Paint()..color = const Color(0xFFEF4444);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 14, height: 13), const Radius.circular(3)),
+      boxPaint,
+    );
+    final Paint crossPaint = Paint()..color = Colors.white;
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 7, height: 2.2), crossPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 2.2, height: 7), crossPaint);
+    // Capsule pill
+    final Paint pillCyan = Paint()..color = const Color(0xFF06B6D4);
+    final Paint pillWhite = Paint()..color = Colors.white;
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 3, cy - 1, 6, 6.5), const Radius.circular(2)), pillCyan);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 9, cy - 1, 6, 6.5), const Radius.circular(2)), pillWhite);
+  }
+
+  void _drawTravelIllustration(Canvas canvas, double cx, double cy) {
+    // Jet Airplane
+    final Path plane = Path()
+      ..moveTo(cx + 7, cy - 7)
+      ..lineTo(cx + 10, cy - 6)
+      ..lineTo(cx + 3, cy + 6)
+      ..lineTo(cx - 3, cy + 4)
+      ..lineTo(cx - 8, cy + 7)
+      ..lineTo(cx - 6, cy + 3)
+      ..lineTo(cx - 10, cy - 2)
+      ..lineTo(cx - 7, cy - 2)
+      ..close();
+    final Paint planePaint = Paint()..color = const Color(0xFF0284C7);
+    canvas.drawPath(plane, planePaint);
+    // Clouds
+    final Paint cloudPaint = Paint()..color = isDark ? const Color(0x66FFFFFF) : const Color(0xEEFFFFFF);
+    canvas.drawCircle(Offset(cx - 5, cy + 5), 3.5, cloudPaint);
+    canvas.drawCircle(Offset(cx - 1, cy + 4), 4.5, cloudPaint);
+    canvas.drawCircle(Offset(cx + 4, cy + 6), 3.0, cloudPaint);
+  }
+
+  void _drawSavingsIllustration(Canvas canvas, double cx, double cy) {
+    // Gold coins
+    final Paint goldPaint = Paint()..color = const Color(0xFFF59E0B);
+    final Paint shinePaint = Paint()..color = const Color(0xFFFDE047);
+    for (int i = 0; i < 3; i++) {
+      final double dy = cy + 4 - (i * 3.5);
+      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 6, dy), width: 12, height: 4.5), goldPaint);
+      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 6, dy - 0.5), width: 10, height: 3), shinePaint);
+    }
+    // Banknote
+    final Paint billPaint = Paint()..color = const Color(0xFF10B981);
+    final RRect bill = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 7, cy + 1), width: 15, height: 10), const Radius.circular(2));
+    canvas.drawRRect(bill, billPaint);
+    final Paint billCircle = Paint()..color = const Color(0xFFA7F3D0);
+    canvas.drawCircle(Offset(cx + 7, cy + 1), 2.2, billCircle);
+  }
+
+  void _drawDefaultIllustration(Canvas canvas, double cx, double cy, Color catColor) {
+    // Dual-tone circular badge
+    final Paint ringPaint = Paint()..color = catColor.withValues(alpha: isDark ? 0.35 : 0.18);
+    canvas.drawCircle(Offset(cx + 1, cy), 11, ringPaint);
+
+    final Paint innerPaint = Paint()..color = catColor.withValues(alpha: isDark ? 0.9 : 0.85);
+    canvas.drawCircle(Offset(cx + 1, cy), 8.5, innerPaint);
+
+    final TextPainter tp = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(category.iconCodePoint),
+        style: TextStyle(fontFamily: category.icon.fontFamily, package: category.icon.fontPackage, fontSize: 11, color: Colors.white),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(cx + 1 - (tp.width / 2), cy - (tp.height / 2)));
+  }
+
   @override
-  bool shouldRepaint(covariant _CapsuleBannerPainter oldDelegate) => oldDelegate.fadeColor != fadeColor || oldDelegate.isDark != isDark;
+  bool shouldRepaint(covariant _CategoryBannerPainter oldDelegate) =>
+      oldDelegate.category != category || oldDelegate.fadeColor != fadeColor || oldDelegate.isDark != isDark;
 }
 
 /// Shortcuts to the three ways of adding money movement.
