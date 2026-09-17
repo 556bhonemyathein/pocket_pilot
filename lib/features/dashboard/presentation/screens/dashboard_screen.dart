@@ -384,287 +384,252 @@ class _CategoryArtworkPainter extends CustomPainter {
   }
 
   void _drawFoodIllustration(Canvas canvas, double cx, double cy) {
-    // Steaming coffee / drink cup
-    final Paint cupPaint = Paint()..color = const Color(0xFFF97316);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 7, cy + 2), width: 12, height: 11), const Radius.circular(2.5)),
-      cupPaint,
-    );
-    final Paint saucerPaint = Paint()..color = const Color(0xFFEA580C);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 7, cy + 7.5), width: 14, height: 2), const Radius.circular(1)),
-      saucerPaint,
-    );
-    // Burger
+    // Single Burger
     final Paint bunPaint = Paint()..color = const Color(0xFFF59E0B);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy - 2), width: 13, height: 5), const Radius.circular(2.5)),
-      bunPaint,
-    );
+    final Path topBun = Path()
+      ..moveTo(cx - 9, cy - 1)
+      ..quadraticBezierTo(cx, cy - 9, cx + 9, cy - 1)
+      ..close();
+    canvas.drawPath(topBun, bunPaint);
+    final Paint seedPaint = Paint()..color = const Color(0xFFFEF3C7);
+    canvas.drawCircle(Offset(cx - 4, cy - 4), 0.9, seedPaint);
+    canvas.drawCircle(Offset(cx + 3, cy - 5), 0.9, seedPaint);
+    canvas.drawCircle(Offset(cx, cy - 3), 0.9, seedPaint);
     final Paint lettucePaint = Paint()..color = const Color(0xFF10B981);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 1), width: 13, height: 2), const Radius.circular(1)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 0.8), width: 19, height: 2.2), const Radius.circular(1)),
       lettucePaint,
     );
+    final Paint cheesePaint = Paint()..color = const Color(0xFFFACC15);
+    final Path cheese = Path()
+      ..moveTo(cx - 8, cy + 2)
+      ..lineTo(cx + 8, cy + 2)
+      ..lineTo(cx + 3, cy + 4.5)
+      ..lineTo(cx - 3, cy + 2)
+      ..close();
+    canvas.drawPath(cheese, cheesePaint);
     final Paint pattyPaint = Paint()..color = const Color(0xFF78350F);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 3.5), width: 13, height: 2.5), const Radius.circular(1)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 4.2), width: 18, height: 3.2), const Radius.circular(1.5)),
       pattyPaint,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 6.5), width: 12, height: 3), const Radius.circular(1.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 7.5), width: 17, height: 3), const Radius.circular(1.5)),
       bunPaint,
     );
   }
 
   void _drawGroceriesIllustration(Canvas canvas, double cx, double cy) {
-    // Grocery bag
+    // Single Grocery paper bag with greens
     final Paint bagPaint = Paint()..color = const Color(0xFFD97706);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 4, cy + 3), width: 13, height: 14), const Radius.circular(2.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 2.5), width: 16, height: 14), const Radius.circular(2)),
       bagPaint,
     );
-    // Bread stick poking out
-    final Paint breadPaint = Paint()..color = const Color(0xFFFBBF24);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 6, cy - 4), width: 4.5, height: 9), const Radius.circular(2)),
-      breadPaint,
-    );
-    // Fresh Apple
-    final Paint applePaint = Paint()..color = const Color(0xFFEF4444);
-    canvas.drawCircle(Offset(cx + 6, cy + 3), 5.0, applePaint);
+    final Paint foldPaint = Paint()..color = const Color(0xFFB45309);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx, cy - 4.5), width: 16, height: 2), foldPaint);
+    final Path carrot = Path()
+      ..moveTo(cx - 4, cy - 4.5)
+      ..lineTo(cx - 1, cy - 10)
+      ..lineTo(cx + 1, cy - 4.5)
+      ..close();
+    final Paint carrotPaint = Paint()..color = const Color(0xFFEA580C);
+    canvas.drawPath(carrot, carrotPaint);
     final Paint leafPaint = Paint()..color = const Color(0xFF22C55E);
-    canvas.drawCircle(Offset(cx + 6.5, cy - 3), 1.6, leafPaint);
+    canvas.drawCircle(Offset(cx - 1, cy - 11), 1.6, leafPaint);
+    canvas.drawCircle(Offset(cx + 3.5, cy - 7), 2.2, leafPaint);
   }
 
   void _drawShoppingIllustration(Canvas canvas, double cx, double cy) {
-    // Shopping Bag
+    // Single Shopping Bag
     final Paint bagPaint = Paint()..color = const Color(0xFFEC4899);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 2), width: 13, height: 14), const Radius.circular(2.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 2.5), width: 17, height: 15), const Radius.circular(3)),
       bagPaint,
     );
     final Paint handlePaint = Paint()
       ..color = const Color(0xFFFCE7F3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4;
-    canvas.drawArc(Rect.fromCenter(center: Offset(cx - 5, cy - 4.5), width: 7, height: 7), 3.14, 3.14, false, handlePaint);
-    // Gift Box
-    final Paint boxPaint = Paint()..color = const Color(0xFF8B5CF6);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 3), width: 11, height: 11), const Radius.circular(2)),
-      boxPaint,
-    );
-    final Paint ribbonPaint = Paint()..color = const Color(0xFFFBBF24);
-    canvas.drawRect(Rect.fromLTWH(cx + 5, cy - 2.5, 2, 11), ribbonPaint);
-    canvas.drawRect(Rect.fromLTWH(cx + 0.5, cy + 2, 11, 2), ribbonPaint);
+      ..strokeWidth = 1.8;
+    canvas.drawArc(Rect.fromCenter(center: Offset(cx, cy - 4.5), width: 9, height: 9), 3.14, 3.14, false, handlePaint);
+    final Paint emblemPaint = Paint()..color = Colors.white.withValues(alpha: 0.9);
+    canvas.drawCircle(Offset(cx, cy + 2.5), 2.5, emblemPaint);
   }
 
   void _drawTransportIllustration(Canvas canvas, double cx, double cy) {
-    // Car body
+    // Single Car
     final Paint carPaint = Paint()..color = const Color(0xFF3B82F6);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 1, cy + 2), width: 20, height: 7.5), const Radius.circular(3)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 2), width: 22, height: 8.5), const Radius.circular(3)),
       carPaint,
     );
     final Paint roofPaint = Paint()..color = const Color(0xFF1D4ED8);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy - 2), width: 11, height: 4.5), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 1, cy - 2.5), width: 13, height: 5.5), const Radius.circular(2)),
       roofPaint,
     );
-    // Wheels
+    final Paint windowPaint = Paint()..color = const Color(0xFF93C5FD);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 1, cy - 2.5), width: 10, height: 3.5), const Radius.circular(1)),
+      windowPaint,
+    );
     final Paint wheelPaint = Paint()..color = const Color(0xFF1E293B);
     final Paint hubPaint = Paint()..color = const Color(0xFFCBD5E1);
-    canvas.drawCircle(Offset(cx - 5, cy + 5.5), 2.8, wheelPaint);
-    canvas.drawCircle(Offset(cx - 5, cy + 5.5), 1.1, hubPaint);
-    canvas.drawCircle(Offset(cx + 6, cy + 5.5), 2.8, wheelPaint);
-    canvas.drawCircle(Offset(cx + 6, cy + 5.5), 1.1, hubPaint);
-    // Speed streaks
-    final Paint streakPaint = Paint()
-      ..color = const Color(0xFF38BDF8)
-      ..strokeWidth = 1.1;
-    canvas.drawLine(Offset(cx - 13, cy), Offset(cx - 8, cy), streakPaint);
-    canvas.drawLine(Offset(cx - 11, cy + 3), Offset(cx - 7, cy + 3), streakPaint);
+    canvas.drawCircle(Offset(cx - 6, cy + 6), 3.2, wheelPaint);
+    canvas.drawCircle(Offset(cx - 6, cy + 6), 1.2, hubPaint);
+    canvas.drawCircle(Offset(cx + 6, cy + 6), 3.2, wheelPaint);
+    canvas.drawCircle(Offset(cx + 6, cy + 6), 1.2, hubPaint);
   }
 
   void _drawHousingIllustration(Canvas canvas, double cx, double cy) {
-    // House base
+    // Single House
     final Paint wallPaint = Paint()..color = const Color(0xFF8B5CF6);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 2.5), width: 14, height: 11), const Radius.circular(1.5)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 2.5), width: 16, height: 12), const Radius.circular(2)),
       wallPaint,
     );
-    // Roof triangle
     final Path roof = Path()
-      ..moveTo(cx - 9, cy - 2)
-      ..lineTo(cx, cy - 9)
-      ..lineTo(cx + 9, cy - 2)
+      ..moveTo(cx - 10, cy - 2.5)
+      ..lineTo(cx, cy - 10)
+      ..lineTo(cx + 10, cy - 2.5)
       ..close();
     final Paint roofPaint = Paint()..color = const Color(0xFF6D28D9);
     canvas.drawPath(roof, roofPaint);
-    // Door
     final Paint doorPaint = Paint()..color = const Color(0xFFFBBF24);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 5), width: 4.5, height: 6), const Radius.circular(1)),
-      doorPaint,
-    );
-    // Chimney
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 5), width: 5, height: 7), const Radius.circular(1)), doorPaint);
     final Paint chimneyPaint = Paint()..color = const Color(0xFF4C1D95);
-    canvas.drawRect(Rect.fromLTWH(cx + 4, cy - 8, 3, 4), chimneyPaint);
+    canvas.drawRect(Rect.fromLTWH(cx + 4, cy - 8.5, 3.2, 4.5), chimneyPaint);
   }
 
   void _drawBillsIllustration(Canvas canvas, double cx, double cy) {
-    // Bill / Invoice sheet
+    // Single Receipt sheet
     final Paint billBg = Paint()..color = const Color(0xFFF8FAFC);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy), width: 16, height: 20), const Radius.circular(2.5)), billBg);
+    final Paint badgePaint = Paint()..color = const Color(0xFF0EA5E9);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 1), width: 13, height: 16), const Radius.circular(2)),
-      billBg,
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy - 6), width: 10, height: 3), const Radius.circular(1)),
+      badgePaint,
     );
     final Paint linePaint = Paint()
       ..color = const Color(0xFF94A3B8)
-      ..strokeWidth = 1.0;
-    canvas.drawLine(Offset(cx - 9, cy - 4), Offset(cx - 1, cy - 4), linePaint);
-    canvas.drawLine(Offset(cx - 9, cy), Offset(cx - 2, cy), linePaint);
-    canvas.drawLine(Offset(cx - 9, cy + 4), Offset(cx - 3, cy + 4), linePaint);
-
-    // Lightning bolt
-    final Path bolt = Path()
-      ..moveTo(cx + 7, cy - 7)
-      ..lineTo(cx + 2, cy)
-      ..lineTo(cx + 5, cy)
-      ..lineTo(cx + 3, cy + 8)
-      ..lineTo(cx + 9, cy)
-      ..lineTo(cx + 6, cy)
-      ..close();
-    final Paint boltPaint = Paint()..color = const Color(0xFFF59E0B);
-    canvas.drawPath(bolt, boltPaint);
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(cx - 5, cy - 2), Offset(cx + 5, cy - 2), linePaint);
+    canvas.drawLine(Offset(cx - 5, cy + 1.5), Offset(cx + 5, cy + 1.5), linePaint);
+    canvas.drawLine(Offset(cx - 5, cy + 5), Offset(cx + 2, cy + 5), linePaint);
   }
 
   void _drawEntertainmentIllustration(Canvas canvas, double cx, double cy) {
-    // Popcorn cup
-    final Paint cupPaint = Paint()..color = const Color(0xFFEF4444);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 5, cy + 3), width: 12, height: 13), const Radius.circular(2)),
-      cupPaint,
-    );
-    // Popcorn kernels
+    // Single Popcorn Tub: red tub with golden fluffy popcorn on top
     final Paint popPaint = Paint()..color = const Color(0xFFFDE047);
-    canvas.drawCircle(Offset(cx - 8, cy - 4), 2.3, popPaint);
-    canvas.drawCircle(Offset(cx - 5, cy - 5.5), 2.8, popPaint);
-    canvas.drawCircle(Offset(cx - 2, cy - 4), 2.3, popPaint);
-    // Movie ticket
-    final Paint ticketPaint = Paint()..color = const Color(0xFF8B5CF6);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 2), width: 11, height: 11), const Radius.circular(2)),
-      ticketPaint,
-    );
-    final Paint starPaint = Paint()..color = const Color(0xFFFEF08A);
-    canvas.drawCircle(Offset(cx + 6, cy + 2), 1.8, starPaint);
+    canvas.drawCircle(Offset(cx - 4.5, cy - 4.5), 3.5, popPaint);
+    canvas.drawCircle(Offset(cx + 4.5, cy - 4.5), 3.5, popPaint);
+    canvas.drawCircle(Offset(cx, cy - 6.5), 4.0, popPaint);
+
+    final Path tub = Path()
+      ..moveTo(cx - 7, cy - 2)
+      ..lineTo(cx + 7, cy - 2)
+      ..lineTo(cx + 5.5, cy + 9)
+      ..lineTo(cx - 5.5, cy + 9)
+      ..close();
+    final Paint tubPaint = Paint()..color = const Color(0xFFEF4444);
+    canvas.drawPath(tub, tubPaint);
+
+    final Path stripe = Path()
+      ..moveTo(cx - 2, cy - 2)
+      ..lineTo(cx + 2, cy - 2)
+      ..lineTo(cx + 1.5, cy + 9)
+      ..lineTo(cx - 1.5, cy + 9)
+      ..close();
+    final Paint stripePaint = Paint()..color = Colors.white;
+    canvas.drawPath(stripe, stripePaint);
   }
 
   void _drawHealthIllustration(Canvas canvas, double cx, double cy) {
-    // Red cross box
+    // Single First-Aid Cross Box
     final Paint boxPaint = Paint()..color = const Color(0xFFEF4444);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 4, cy + 1), width: 13, height: 12), const Radius.circular(2.5)),
-      boxPaint,
-    );
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy), width: 19, height: 16), const Radius.circular(3.5)), boxPaint);
     final Paint crossPaint = Paint()..color = Colors.white;
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 4, cy + 1), width: 6.5, height: 2.0), crossPaint);
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 4, cy + 1), width: 2.0, height: 6.5), crossPaint);
-    // Capsule pill
-    final Paint pillCyan = Paint()..color = const Color(0xFF06B6D4);
-    final Paint pillWhite = Paint()..color = Colors.white;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 3, cy - 1, 5.5, 6), const Radius.circular(1.8)), pillCyan);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx + 8.5, cy - 1, 5.5, 6), const Radius.circular(1.8)), pillWhite);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx, cy), width: 9, height: 3), crossPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx, cy), width: 3, height: 9), crossPaint);
   }
 
   void _drawEducationIllustration(Canvas canvas, double cx, double cy) {
-    // Graduation cap diamond
+    // Single Graduation Cap
     final Path cap = Path()
-      ..moveTo(cx, cy - 6)
-      ..lineTo(cx + 9, cy - 2)
-      ..lineTo(cx, cy + 2)
-      ..lineTo(cx - 9, cy - 2)
+      ..moveTo(cx, cy - 6.5)
+      ..lineTo(cx + 10, cy - 2)
+      ..lineTo(cx, cy + 2.5)
+      ..lineTo(cx - 10, cy - 2)
       ..close();
     final Paint capPaint = Paint()..color = const Color(0xFF4F46E5);
     canvas.drawPath(cap, capPaint);
-    // Skullcap base
     final Path skull = Path()
-      ..moveTo(cx - 5, cy)
-      ..quadraticBezierTo(cx, cy + 6, cx + 5, cy)
+      ..moveTo(cx - 6, cy)
+      ..quadraticBezierTo(cx, cy + 7, cx + 6, cy)
       ..close();
     final Paint skullPaint = Paint()..color = const Color(0xFF3730A3);
     canvas.drawPath(skull, skullPaint);
-    // Tassel
     final Paint tasselPaint = Paint()
       ..color = const Color(0xFFF59E0B)
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1.4
       ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(cx, cy - 2), Offset(cx + 8, cy + 3), tasselPaint);
-    // Mini open book below
-    final Paint bookPaint = Paint()..color = const Color(0xFFE0E7FF);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 6.5), width: 13, height: 3), const Radius.circular(1)),
-      bookPaint,
-    );
+    canvas.drawLine(Offset(cx, cy - 2), Offset(cx + 9, cy + 3.5), tasselPaint);
+    final Paint tasselEnd = Paint()..color = const Color(0xFFF59E0B);
+    canvas.drawCircle(Offset(cx + 9, cy + 4.5), 1.3, tasselEnd);
   }
 
   void _drawTravelIllustration(Canvas canvas, double cx, double cy) {
-    // Jet Airplane
+    // Single Airplane angled upwards
     final Path plane = Path()
-      ..moveTo(cx + 6, cy - 6)
-      ..lineTo(cx + 9, cy - 5)
-      ..lineTo(cx + 3, cy + 5)
-      ..lineTo(cx - 3, cy + 3)
-      ..lineTo(cx - 7, cy + 6)
-      ..lineTo(cx - 5, cy + 2)
-      ..lineTo(cx - 9, cy - 2)
+      ..moveTo(cx + 8, cy - 8)
+      ..lineTo(cx + 10, cy - 7)
+      ..lineTo(cx + 3, cy + 6)
+      ..lineTo(cx - 4, cy + 4)
+      ..lineTo(cx - 8, cy + 8)
+      ..lineTo(cx - 6, cy + 2)
+      ..lineTo(cx - 10, cy - 2)
       ..lineTo(cx - 6, cy - 2)
       ..close();
     final Paint planePaint = Paint()..color = const Color(0xFF0284C7);
     canvas.drawPath(plane, planePaint);
-    // Clouds
-    final Paint cloudPaint = Paint()..color = isDark ? const Color(0x66FFFFFF) : const Color(0xEEFFFFFF);
-    canvas.drawCircle(Offset(cx - 5, cy + 4), 3.0, cloudPaint);
-    canvas.drawCircle(Offset(cx - 1, cy + 3.5), 4.0, cloudPaint);
-    canvas.drawCircle(Offset(cx + 4, cy + 5), 2.5, cloudPaint);
   }
 
   void _drawSavingsIllustration(Canvas canvas, double cx, double cy) {
-    // Gold coins
-    final Paint goldPaint = Paint()..color = const Color(0xFFF59E0B);
-    final Paint shinePaint = Paint()..color = const Color(0xFFFDE047);
-    for (int i = 0; i < 3; i++) {
-      final double dy = cy + 4 - (i * 3.2);
-      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 5, dy), width: 11, height: 4), goldPaint);
-      canvas.drawOval(Rect.fromCenter(center: Offset(cx - 5, dy - 0.5), width: 9, height: 2.5), shinePaint);
-    }
-    // Banknote
-    final Paint billPaint = Paint()..color = const Color(0xFF10B981);
-    final RRect bill = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx + 6, cy + 1), width: 14, height: 9), const Radius.circular(2));
-    canvas.drawRRect(bill, billPaint);
-    final Paint billCircle = Paint()..color = const Color(0xFFA7F3D0);
-    canvas.drawCircle(Offset(cx + 6, cy + 1), 2.0, billCircle);
+    // Single Large Gold Coin
+    final Paint goldDark = Paint()..color = const Color(0xFFD97706);
+    final Paint goldBase = Paint()..color = const Color(0xFFF59E0B);
+    final Paint goldShine = Paint()..color = const Color(0xFFFDE047);
+
+    canvas.drawCircle(Offset(cx, cy), 9.0, goldDark);
+    canvas.drawCircle(Offset(cx, cy), 8.0, goldBase);
+    canvas.drawCircle(Offset(cx, cy), 6.5, goldDark);
+    canvas.drawCircle(Offset(cx, cy), 5.5, goldShine);
+
+    final Paint starPaint = Paint()..color = const Color(0xFF78350F);
+    final Path star = Path()
+      ..moveTo(cx, cy - 3.5)
+      ..lineTo(cx + 1, cy - 1)
+      ..lineTo(cx + 3.5, cy)
+      ..lineTo(cx + 1, cy + 1)
+      ..lineTo(cx, cy + 3.5)
+      ..lineTo(cx - 1, cy + 1)
+      ..lineTo(cx - 3.5, cy)
+      ..lineTo(cx - 1, cy - 1)
+      ..close();
+    canvas.drawPath(star, starPaint);
   }
 
   void _drawGeneralIllustration(Canvas canvas, double cx, double cy, Color catColor) {
-    // Elegant payment card / badge vignette (pure artwork illustration, NOT an icon)
-    final Paint cardBg = Paint()..color = catColor.withValues(alpha: isDark ? 0.85 : 0.75);
-    final RRect card = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx - 1, cy + 1), width: 16, height: 11), const Radius.circular(2.5));
+    // Single Payment Card
+    final Paint cardBg = Paint()..color = catColor.withValues(alpha: isDark ? 0.9 : 0.85);
+    final RRect card = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy), width: 19, height: 13), const Radius.circular(2.5));
     canvas.drawRRect(card, cardBg);
-    // Chip
     final Paint chipPaint = Paint()..color = const Color(0xFFFDE047);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx - 7, cy - 1, 4.0, 3.0), const Radius.circular(0.8)), chipPaint);
-    // Magnetic / accent line
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(cx - 6.5, cy - 2.5, 4.5, 3.5), const Radius.circular(0.8)), chipPaint);
     final Paint linePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.6)
-      ..strokeWidth = 1.1;
-    canvas.drawLine(Offset(cx - 7, cy + 3.5), Offset(cx + 5, cy + 3.5), linePaint);
-    // Sparkle star near top right
-    final Paint starPaint = Paint()..color = const Color(0xFF38BDF8);
-    canvas.drawCircle(Offset(cx + 7, cy - 4), 1.6, starPaint);
-    canvas.drawCircle(Offset(cx + 5, cy - 6), 0.9, starPaint);
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(cx - 6.5, cy + 2.8), Offset(cx + 6.5, cy + 2.8), linePaint);
   }
 
   @override
