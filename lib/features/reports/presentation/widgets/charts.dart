@@ -25,10 +25,7 @@ class ChartAxisHelper {
 
   /// Computes which indices in [0, totalPoints - 1] should display an X-axis badge
   /// given the available chart width [availableWidth].
-  static Set<int> getVisibleIndices({
-    required int totalPoints,
-    required double availableWidth,
-  }) {
+  static Set<int> getVisibleIndices({required int totalPoints, required double availableWidth}) {
     if (totalPoints <= 0) return const <int>{};
     if (totalPoints == 1) return const <int>{0};
 
@@ -56,8 +53,7 @@ class ChartAxisHelper {
     // Generic adaptive step for arbitrary number of points
     final Set<int> indices = <int>{};
     indices.add(0);
-    final int step =
-        ((totalPoints - 1) / (maxLabels - 1)).ceil().clamp(1, totalPoints);
+    final int step = ((totalPoints - 1) / (maxLabels - 1)).ceil().clamp(1, totalPoints);
     for (int i = step; i < totalPoints - 1; i += step) {
       if ((totalPoints - 1) - i >= (step * 0.6).round()) {
         indices.add(i);
@@ -81,11 +77,7 @@ class ChartAxisHelper {
         child: Center(
           child: Text(
             label,
-            style: context.text.labelSmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
-            ),
+            style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant, fontWeight: FontWeight.w600, fontSize: 11),
           ),
         ),
       );
@@ -94,39 +86,25 @@ class ChartAxisHelper {
     final ColorScheme colors = context.colors;
     final Color badgeBg = isBoundary
         ? colors.primary.withValues(alpha: 0.12)
-        : (isMilestone
-            ? colors.surfaceContainerHighest.withValues(alpha: 0.55)
-            : Colors.transparent);
+        : (isMilestone ? colors.surfaceContainerHighest.withValues(alpha: 0.55) : Colors.transparent);
 
-    final Color textColor = isBoundary
-        ? colors.primary
-        : (isMilestone ? colors.onSurface : colors.onSurfaceVariant);
+    final Color textColor = isBoundary ? colors.primary : (isMilestone ? colors.onSurface : colors.onSurfaceVariant);
 
     final Border? border = isBoundary
         ? Border.all(color: colors.primary.withValues(alpha: 0.35), width: 1)
-        : (isMilestone
-            ? Border.all(
-                color: colors.outlineVariant.withValues(alpha: 0.45),
-                width: 1,
-              )
-            : null);
+        : (isMilestone ? Border.all(color: colors.outlineVariant.withValues(alpha: 0.45), width: 1) : null);
 
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-          decoration: BoxDecoration(
-            color: badgeBg,
-            borderRadius: BorderRadius.circular(6),
-            border: border,
-          ),
+          decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(6), border: border),
           child: Text(
             label,
             style: context.text.labelSmall?.copyWith(
               fontSize: 10,
-              fontWeight:
-                  isBoundary || isMilestone ? FontWeight.w700 : FontWeight.w500,
+              fontWeight: isBoundary || isMilestone ? FontWeight.w700 : FontWeight.w500,
               color: textColor,
               letterSpacing: -0.2,
             ),
@@ -142,12 +120,7 @@ class ChartAxisHelper {
 /// Bars beat a line for discrete periods: they say "this week" rather than
 /// implying a continuous quantity between the points.
 class IncomeExpenseBarChart extends StatelessWidget {
-  const IncomeExpenseBarChart({
-    required this.points,
-    required this.currencyCode,
-    super.key,
-    this.height = 220,
-  });
+  const IncomeExpenseBarChart({required this.points, required this.currencyCode, super.key, this.height = 220});
 
   final List<SeriesPoint> points;
   final String currencyCode;
@@ -165,18 +138,14 @@ class IncomeExpenseBarChart extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final double availablePlotWidth =
-            (constraints.maxWidth - 56).clamp(100.0, 2000.0);
+        final double availablePlotWidth = (constraints.maxWidth - 56).clamp(100.0, 2000.0);
         final double groupSlot = availablePlotWidth / points.length;
 
         // Dynamic bar width and space based on slot width
         final double barWidth = (groupSlot * 0.32).clamp(2.5, 10.0);
         final double barsSpace = (groupSlot * 0.12).clamp(1.0, 4.0);
 
-        final Set<int> visibleIndices = ChartAxisHelper.getVisibleIndices(
-          totalPoints: points.length,
-          availableWidth: availablePlotWidth,
-        );
+        final Set<int> visibleIndices = ChartAxisHelper.getVisibleIndices(totalPoints: points.length, availableWidth: availablePlotWidth);
 
         return SizedBox(
           height: height,
@@ -188,10 +157,7 @@ class IncomeExpenseBarChart extends StatelessWidget {
               gridData: FlGridData(
                 drawVerticalLine: false,
                 horizontalInterval: top / 4,
-                getDrawingHorizontalLine: (double value) => FlLine(
-                  color: context.colors.outlineVariant.withValues(alpha: 0.5),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (double value) => FlLine(color: context.colors.outlineVariant.withValues(alpha: 0.5), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
                 topTitles: const AxisTitles(),
@@ -203,10 +169,7 @@ class IncomeExpenseBarChart extends StatelessWidget {
                     interval: top / 4,
                     getTitlesWidget: (double value, TitleMeta meta) => Text(
                       value.toCompactCurrency(currencyCode: currencyCode),
-                      style: context.text.labelSmall?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                        fontSize: 9,
-                      ),
+                      style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant, fontSize: 9),
                     ),
                   ),
                 ),
@@ -227,12 +190,9 @@ class IncomeExpenseBarChart extends StatelessWidget {
                         return const SizedBox.shrink();
                       }
 
-                      final bool isDateNumber =
-                          int.tryParse(points[index].label) != null;
-                      final bool isBoundary =
-                          index == 0 || index == points.length - 1;
-                      final bool isMilestone =
-                          isBoundary || (index + 1) % 5 == 0;
+                      final bool isDateNumber = int.tryParse(points[index].label) != null;
+                      final bool isBoundary = index == 0 || index == points.length - 1;
+                      final bool isMilestone = isBoundary || (index + 1) % 5 == 0;
 
                       return ChartAxisHelper.buildMilestoneBadge(
                         context: context,
@@ -248,34 +208,21 @@ class IncomeExpenseBarChart extends StatelessWidget {
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
                   getTooltipColor: (_) => context.colors.inverseSurface,
-                  getTooltipItem: (
-                    BarChartGroupData group,
-                    int groupIndex,
-                    BarChartRodData rod,
-                    int rodIndex,
-                  ) {
+                  getTooltipItem: (BarChartGroupData group, int groupIndex, BarChartRodData rod, int rodIndex) {
                     final int idx = group.x.toInt();
-                    final String dayLabel =
-                        (idx >= 0 && idx < points.length) ? points[idx].label : '';
+                    final String dayLabel = (idx >= 0 && idx < points.length) ? points[idx].label : '';
                     final bool isIncome = rodIndex == 0;
                     final String type = isIncome ? 'Income' : 'Expense';
-                    final String formattedVal =
-                        rod.toY.toCurrency(currencyCode: currencyCode);
+                    final String formattedVal = rod.toY.toCurrency(currencyCode: currencyCode);
 
                     return BarTooltipItem(
                       dayLabel.isNotEmpty ? '$dayLabel\n' : '',
-                      context.text.labelSmall!.copyWith(
-                        color: context.colors.onInverseSurface
-                            .withValues(alpha: 0.7),
-                        fontWeight: FontWeight.normal,
-                      ),
+                      context.text.labelSmall!.copyWith(color: context.colors.onInverseSurface.withValues(alpha: 0.7), fontWeight: FontWeight.normal),
                       children: <TextSpan>[
                         TextSpan(
                           text: '$type: $formattedVal',
                           style: context.text.labelMedium!.copyWith(
-                            color: isIncome
-                                ? const Color(0xFF4ADE80)
-                                : const Color(0xFFF87171),
+                            color: isIncome ? const Color(0xFF4ADE80) : const Color(0xFFF87171),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -315,12 +262,7 @@ class IncomeExpenseBarChart extends StatelessWidget {
 
 /// Cumulative balance over time.
 class BalanceLineChart extends StatelessWidget {
-  const BalanceLineChart({
-    required this.points,
-    required this.currencyCode,
-    super.key,
-    this.height = 200,
-  });
+  const BalanceLineChart({required this.points, required this.currencyCode, super.key, this.height = 200});
 
   final List<SeriesPoint> points;
   final String currencyCode;
@@ -334,35 +276,20 @@ class BalanceLineChart extends StatelessWidget {
     // than a series of disconnected daily deltas.
     double running = 0;
     final List<FlSpot> spots = <FlSpot>[
-      for (int i = 0; i < points.length; i++)
-        FlSpot(
-          i.toDouble(),
-          running += points[i].income - points[i].expense,
-        ),
+      for (int i = 0; i < points.length; i++) FlSpot(i.toDouble(), running += points[i].income - points[i].expense),
     ];
 
-    final double minBal = spots
-        .map((FlSpot s) => s.y)
-        .fold<double>(0, (double a, double b) => a < b ? a : b);
-    final double maxBal = spots
-        .map((FlSpot s) => s.y)
-        .fold<double>(0, (double a, double b) => a > b ? a : b);
+    final double minBal = spots.map((FlSpot s) => s.y).fold<double>(0, (double a, double b) => a < b ? a : b);
+    final double maxBal = spots.map((FlSpot s) => s.y).fold<double>(0, (double a, double b) => a > b ? a : b);
     final double balanceSpread = (maxBal - minBal).abs();
-    final double lineTop =
-        balanceSpread == 0 ? 100 : (maxBal > 0 ? maxBal * 1.25 : 10);
-    final double lineBottom =
-        balanceSpread == 0 ? 0 : (minBal < 0 ? minBal * 1.25 : 0);
-    final double lineInterval =
-        ((lineTop - lineBottom) / 4).clamp(1.0, double.infinity);
+    final double lineTop = balanceSpread == 0 ? 100 : (maxBal > 0 ? maxBal * 1.25 : 10);
+    final double lineBottom = balanceSpread == 0 ? 0 : (minBal < 0 ? minBal * 1.25 : 0);
+    final double lineInterval = ((lineTop - lineBottom) / 4).clamp(1.0, double.infinity);
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final double availablePlotWidth =
-            (constraints.maxWidth - 56).clamp(100.0, 2000.0);
-        final Set<int> visibleIndices = ChartAxisHelper.getVisibleIndices(
-          totalPoints: points.length,
-          availableWidth: availablePlotWidth,
-        );
+        final double availablePlotWidth = (constraints.maxWidth - 56).clamp(100.0, 2000.0);
+        final Set<int> visibleIndices = ChartAxisHelper.getVisibleIndices(totalPoints: points.length, availableWidth: availablePlotWidth);
 
         return SizedBox(
           height: height,
@@ -374,10 +301,7 @@ class BalanceLineChart extends StatelessWidget {
               gridData: FlGridData(
                 drawVerticalLine: false,
                 horizontalInterval: lineInterval,
-                getDrawingHorizontalLine: (double value) => FlLine(
-                  color: context.colors.outlineVariant.withValues(alpha: 0.3),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (double value) => FlLine(color: context.colors.outlineVariant.withValues(alpha: 0.3), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
                 topTitles: const AxisTitles(),
@@ -389,10 +313,7 @@ class BalanceLineChart extends StatelessWidget {
                     interval: lineInterval,
                     getTitlesWidget: (double value, TitleMeta meta) => Text(
                       value.toCompactCurrency(currencyCode: currencyCode),
-                      style: context.text.labelSmall?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                        fontSize: 9,
-                      ),
+                      style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant, fontSize: 9),
                     ),
                   ),
                 ),
@@ -413,12 +334,9 @@ class BalanceLineChart extends StatelessWidget {
                         return const SizedBox.shrink();
                       }
 
-                      final bool isDateNumber =
-                          int.tryParse(points[index].label) != null;
-                      final bool isBoundary =
-                          index == 0 || index == points.length - 1;
-                      final bool isMilestone =
-                          isBoundary || (index + 1) % 5 == 0;
+                      final bool isDateNumber = int.tryParse(points[index].label) != null;
+                      final bool isBoundary = index == 0 || index == points.length - 1;
+                      final bool isMilestone = isBoundary || (index + 1) % 5 == 0;
 
                       return ChartAxisHelper.buildMilestoneBadge(
                         context: context,
@@ -434,37 +352,23 @@ class BalanceLineChart extends StatelessWidget {
               lineTouchData: LineTouchData(
                 touchTooltipData: LineTouchTooltipData(
                   getTooltipColor: (_) => context.colors.inverseSurface,
-                  getTooltipItems: (List<LineBarSpot> spots) => spots
-                      .map(
-                        (LineBarSpot spot) {
-                          final int index = spot.x.toInt();
-                          final String label =
-                              (index >= 0 && index < points.length)
-                                  ? points[index].label
-                                  : '';
-                          return LineTooltipItem(
-                            label.isNotEmpty ? '$label\n' : '',
-                            context.text.labelSmall!.copyWith(
-                              color: context.colors.onInverseSurface
-                                  .withValues(alpha: 0.7),
-                            ),
-                            children: <TextSpan>[
-                              TextSpan(
-                                text: spot.y.toSignedCurrency(
-                                  currencyCode: currencyCode,
-                                ),
-                                style: context.text.labelMedium!.copyWith(
-                                  color: spot.y >= 0
-                                      ? const Color(0xFF4ADE80)
-                                      : const Color(0xFFF87171),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      )
-                      .toList(),
+                  getTooltipItems: (List<LineBarSpot> spots) => spots.map((LineBarSpot spot) {
+                    final int index = spot.x.toInt();
+                    final String label = (index >= 0 && index < points.length) ? points[index].label : '';
+                    return LineTooltipItem(
+                      label.isNotEmpty ? '$label\n' : '',
+                      context.text.labelSmall!.copyWith(color: context.colors.onInverseSurface.withValues(alpha: 0.7)),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: spot.y.toSignedCurrency(currencyCode: currencyCode),
+                          style: context.text.labelMedium!.copyWith(
+                            color: spot.y >= 0 ? const Color(0xFF4ADE80) : const Color(0xFFF87171),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 ),
               ),
               lineBarsData: <LineChartBarData>[
@@ -480,10 +384,7 @@ class BalanceLineChart extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: <Color>[
-                        context.colors.primary.withValues(alpha: 0.28),
-                        context.colors.primary.withValues(alpha: 0),
-                      ],
+                      colors: <Color>[context.colors.primary.withValues(alpha: 0.28), context.colors.primary.withValues(alpha: 0)],
                     ),
                   ),
                 ),
@@ -501,11 +402,7 @@ class BalanceLineChart extends StatelessWidget {
 /// A donut rather than a pie: the hole carries the total, which is the number
 /// people actually look for first.
 class CategoryDonutChart extends StatefulWidget {
-  const CategoryDonutChart({
-    required this.slices,
-    required this.currencyCode,
-    super.key,
-  });
+  const CategoryDonutChart({required this.slices, required this.currencyCode, super.key});
 
   final List<CategorySlice> slices;
   final String currencyCode;
@@ -520,10 +417,7 @@ class _CategoryDonutChartState extends State<CategoryDonutChart> {
 
   @override
   Widget build(BuildContext context) {
-    final double total = widget.slices.fold<double>(
-      0,
-      (double sum, CategorySlice s) => sum + s.value,
-    );
+    final double total = widget.slices.fold<double>(0, (double sum, CategorySlice s) => sum + s.value);
     if (total <= 0) return const SizedBox.shrink();
 
     return Column(
@@ -539,14 +433,11 @@ class _CategoryDonutChartState extends State<CategoryDonutChart> {
                   centerSpaceRadius: 62,
                   startDegreeOffset: -90,
                   pieTouchData: PieTouchData(
-                    touchCallback:
-                        (FlTouchEvent event, PieTouchResponse? response) {
-                          setState(() {
-                            _touched = response?.touchedSection
-                                    ?.touchedSectionIndex ??
-                                -1;
-                          });
-                        },
+                    touchCallback: (FlTouchEvent event, PieTouchResponse? response) {
+                      setState(() {
+                        _touched = response?.touchedSection?.touchedSectionIndex ?? -1;
+                      });
+                    },
                   ),
                   sections: <PieChartSectionData>[
                     for (int i = 0; i < widget.slices.length; i++)
@@ -559,12 +450,7 @@ class _CategoryDonutChartState extends State<CategoryDonutChart> {
                   ],
                 ),
               ),
-              _DonutCentre(
-                slices: widget.slices,
-                touched: _touched,
-                total: total,
-                currencyCode: widget.currencyCode,
-              ),
+              _DonutCentre(slices: widget.slices, touched: _touched, total: total, currencyCode: widget.currencyCode),
             ],
           ),
         ),
@@ -574,11 +460,7 @@ class _CategoryDonutChartState extends State<CategoryDonutChart> {
           runSpacing: AppSpacing.sm,
           children: <Widget>[
             for (int i = 0; i < widget.slices.length; i++)
-              _LegendChip(
-                slice: widget.slices[i],
-                share: widget.slices[i].value / total,
-                isActive: _touched == i,
-              ),
+              _LegendChip(slice: widget.slices[i], share: widget.slices[i].value / total, isActive: _touched == i),
           ],
         ),
       ],
@@ -587,12 +469,7 @@ class _CategoryDonutChartState extends State<CategoryDonutChart> {
 }
 
 class _DonutCentre extends StatelessWidget {
-  const _DonutCentre({
-    required this.slices,
-    required this.touched,
-    required this.total,
-    required this.currencyCode,
-  });
+  const _DonutCentre({required this.slices, required this.touched, required this.total, required this.currencyCode});
 
   final List<CategorySlice> slices;
   final int touched;
@@ -612,26 +489,17 @@ class _DonutCentre extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.text.labelMedium?.copyWith(
-            color: context.colors.onSurfaceVariant,
-          ),
+          style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant),
         ),
         AppSpacing.xxs.gapH,
-        Text(
-          value.toCompactCurrency(currencyCode: currencyCode),
-          style: context.text.titleLarge,
-        ),
+        Text(value.toCompactCurrency(currencyCode: currencyCode), style: context.text.titleLarge),
       ],
     );
   }
 }
 
 class _LegendChip extends StatelessWidget {
-  const _LegendChip({
-    required this.slice,
-    required this.share,
-    required this.isActive,
-  });
+  const _LegendChip({required this.slice, required this.share, required this.isActive});
 
   final CategorySlice slice;
   final double share;
@@ -645,17 +513,12 @@ class _LegendChip extends StatelessWidget {
         Container(
           height: 10,
           width: 10,
-          decoration: BoxDecoration(
-            color: slice.color,
-            borderRadius: BorderRadius.circular(3),
-          ),
+          decoration: BoxDecoration(color: slice.color, borderRadius: BorderRadius.circular(3)),
         ),
         AppSpacing.sm.gapW,
         Text(
           '${slice.label} · ${share.toPercent()}',
-          style: context.text.labelSmall?.copyWith(
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-          ),
+          style: context.text.labelSmall?.copyWith(fontWeight: isActive ? FontWeight.w700 : FontWeight.w500),
         ),
       ],
     );

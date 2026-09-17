@@ -5,26 +5,17 @@ import 'package:pocket_pilot/features/reports/presentation/widgets/charts.dart';
 void main() {
   group('ChartAxisHelper', () {
     test('returns empty set for 0 points', () {
-      final Set<int> indices = ChartAxisHelper.getVisibleIndices(
-        totalPoints: 0,
-        availableWidth: 320,
-      );
+      final Set<int> indices = ChartAxisHelper.getVisibleIndices(totalPoints: 0, availableWidth: 320);
       expect(indices, isEmpty);
     });
 
     test('returns single index 0 for 1 point', () {
-      final Set<int> indices = ChartAxisHelper.getVisibleIndices(
-        totalPoints: 1,
-        availableWidth: 320,
-      );
+      final Set<int> indices = ChartAxisHelper.getVisibleIndices(totalPoints: 1, availableWidth: 320);
       expect(indices, equals(<int>{0}));
     });
 
     test('weekly: displays all 7 days on standard phone screen', () {
-      final Set<int> indices = ChartAxisHelper.getVisibleIndices(
-        totalPoints: 7,
-        availableWidth: 300,
-      );
+      final Set<int> indices = ChartAxisHelper.getVisibleIndices(totalPoints: 7, availableWidth: 300);
       expect(indices, equals(<int>{0, 1, 2, 3, 4, 5, 6}));
     });
 
@@ -39,19 +30,13 @@ void main() {
     });
 
     test('monthly (31 days): produces milestone days 1, 5, 10, 15, 20, 25, 31', () {
-      final Set<int> indices = ChartAxisHelper.getVisibleIndices(
-        totalPoints: 31,
-        availableWidth: 300,
-      );
+      final Set<int> indices = ChartAxisHelper.getVisibleIndices(totalPoints: 31, availableWidth: 300);
 
       expect(indices, equals(<int>{0, 4, 9, 14, 19, 24, 30}));
     });
 
     test('monthly (28 days): produces milestone days 1, 5, 10, 15, 20, 25, 28', () {
-      final Set<int> indices = ChartAxisHelper.getVisibleIndices(
-        totalPoints: 28,
-        availableWidth: 300,
-      );
+      final Set<int> indices = ChartAxisHelper.getVisibleIndices(totalPoints: 28, availableWidth: 300);
 
       expect(indices, equals(<int>{0, 4, 9, 14, 19, 24, 27}));
     });
@@ -81,13 +66,8 @@ void main() {
   });
 
   group('Chart Widgets Rendering', () {
-    testWidgets('IncomeExpenseBarChart renders milestones and suppresses overlapping intermediate days', (
-      WidgetTester tester,
-    ) async {
-      final List<SeriesPoint> monthlyPoints = <SeriesPoint>[
-        for (int i = 1; i <= 30; i++)
-          (label: '$i', income: i * 10.0, expense: i * 5.0),
-      ];
+    testWidgets('IncomeExpenseBarChart renders milestones and suppresses overlapping intermediate days', (WidgetTester tester) async {
+      final List<SeriesPoint> monthlyPoints = <SeriesPoint>[for (int i = 1; i <= 30; i++) (label: '$i', income: i * 10.0, expense: i * 5.0)];
 
       await tester.pumpWidget(
         MaterialApp(
@@ -95,10 +75,7 @@ void main() {
             body: SizedBox(
               width: 360,
               height: 250,
-              child: IncomeExpenseBarChart(
-                points: monthlyPoints,
-                currencyCode: 'USD',
-              ),
+              child: IncomeExpenseBarChart(points: monthlyPoints, currencyCode: 'USD'),
             ),
           ),
         ),
@@ -127,13 +104,8 @@ void main() {
       expect(find.text('29'), findsNothing);
     });
 
-    testWidgets('BalanceLineChart renders cleanly with milestone labels', (
-      WidgetTester tester,
-    ) async {
-      final List<SeriesPoint> monthlyPoints = <SeriesPoint>[
-        for (int i = 1; i <= 30; i++)
-          (label: '$i', income: 100.0, expense: 50.0),
-      ];
+    testWidgets('BalanceLineChart renders cleanly with milestone labels', (WidgetTester tester) async {
+      final List<SeriesPoint> monthlyPoints = <SeriesPoint>[for (int i = 1; i <= 30; i++) (label: '$i', income: 100.0, expense: 50.0)];
 
       await tester.pumpWidget(
         MaterialApp(
@@ -141,10 +113,7 @@ void main() {
             body: SizedBox(
               width: 360,
               height: 250,
-              child: BalanceLineChart(
-                points: monthlyPoints,
-                currencyCode: 'USD',
-              ),
+              child: BalanceLineChart(points: monthlyPoints, currencyCode: 'USD'),
             ),
           ),
         ),

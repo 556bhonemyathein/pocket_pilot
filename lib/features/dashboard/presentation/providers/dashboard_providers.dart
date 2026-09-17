@@ -35,41 +35,23 @@ final weeklySeriesProvider = FutureProvider<List<SeriesPoint>>((Ref ref) async {
   final DateTime now = DateTime.now();
   final DateTime from = now.subtract(const Duration(days: 6)).startOfDay;
 
-  final result = await ref
-      .watch(transactionRepositoryProvider)
-      .dailyTotals(from: from, to: now.endOfDay);
+  final result = await ref.watch(transactionRepositoryProvider).dailyTotals(from: from, to: now.endOfDay);
 
   return result.when(
     success: (List<({DateTime day, double income, double expense})> days) =>
-        days
-            .map(
-              (({DateTime day, double income, double expense}) d) => (
-                label: d.day.weekdayShort,
-                income: d.income,
-                expense: d.expense,
-              ),
-            )
-            .toList(),
+        days.map((({DateTime day, double income, double expense}) d) => (label: d.day.weekdayShort, income: d.income, expense: d.expense)).toList(),
     failure: (_) => const <SeriesPoint>[],
   );
 }, name: 'weeklySeries');
 
 /// Spending by category this month, ready for the donut.
-final monthByCategoryProvider = FutureProvider<List<CategorySlice>>((
-  Ref ref,
-) async {
+final monthByCategoryProvider = FutureProvider<List<CategorySlice>>((Ref ref) async {
   ref.watch(monthSummaryProvider);
 
   final range = ref.watch(currentMonthRange);
   final Map<String, Category> lookup = ref.watch(categoryLookupProvider);
 
-  final result = await ref
-      .watch(transactionRepositoryProvider)
-      .totalsByCategory(
-        from: range.from,
-        to: range.to,
-        expensesOnly: true,
-      );
+  final result = await ref.watch(transactionRepositoryProvider).totalsByCategory(from: range.from, to: range.to, expensesOnly: true);
 
   return result.when(
     success: (Map<String, double> totals) => totals.entries
@@ -78,11 +60,7 @@ final monthByCategoryProvider = FutureProvider<List<CategorySlice>>((
         .take(6)
         .map((MapEntry<String, double> e) {
           final Category category = lookup[e.key] ?? Category.unknown;
-          return (
-            label: category.name,
-            value: e.value,
-            color: category.color,
-          );
+          return (label: category.name, value: e.value, color: category.color);
         })
         .toList(),
     failure: (_) => const <CategorySlice>[],
@@ -101,11 +79,18 @@ final greetingProvider = Provider<String>((Ref ref) {
   return name.isEmpty ? part : '$part, $name';
 }, name: 'greeting');
 
+/// Capitalized time-of-day greeting for the dashboard header (e.g. 'Good Morning').
+final greetingTimeOfDayProvider = Provider<String>((Ref ref) {
+  final int hour = DateTime.now().hour;
+  return switch (hour) {
+    < 12 => 'Good Morning',
+    < 18 => 'Good Afternoon',
+    _ => 'Good Evening',
+  };
+}, name: 'greetingTimeOfDay');
+
 /// The user's monthly budget, falling back to zero (which hides the card).
-final monthlyBudgetProvider = Provider<double>(
-  (Ref ref) => ref.watch(currentUserProvider)?.monthlyBudget ?? 0,
-  name: 'monthlyBudget',
-);
+final monthlyBudgetProvider = Provider<double>((Ref ref) => ref.watch(currentUserProvider)?.monthlyBudget ?? 0, name: 'monthlyBudget');
 
 /// Convenience for the pull-to-refresh gesture: re-runs the derived providers.
 Future<void> refreshDashboard(WidgetRef ref) async {

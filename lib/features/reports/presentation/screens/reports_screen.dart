@@ -28,9 +28,7 @@ class ReportsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ReportRange range = ref.watch(reportRangeProvider);
-    final AsyncValue<TransactionSummary> summary = ref.watch(
-      reportSummaryProvider,
-    );
+    final AsyncValue<TransactionSummary> summary = ref.watch(reportSummaryProvider);
     final String currency = ref.watch(currencyCodeProvider);
 
     return Scaffold(
@@ -42,22 +40,13 @@ class ReportsScreen extends ConsumerWidget {
             titleSpacing: AppSpacing.page,
             title: const Text('Reports'),
             actions: <Widget>[
-              IconButton(
-                tooltip: 'Export',
-                onPressed: () => _openExportSheet(context, ref),
-                icon: const Icon(Icons.ios_share_rounded),
-              ),
+              IconButton(tooltip: 'Export', onPressed: () => _openExportSheet(context, ref), icon: const Icon(Icons.ios_share_rounded)),
               AppSpacing.sm.gapW,
             ],
           ),
 
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              0,
-              AppSpacing.page,
-              120,
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 120),
             sliver: SliverList.list(
               children: <Widget>[
                 const _PeriodSelector(),
@@ -66,10 +55,7 @@ class ReportsScreen extends ConsumerWidget {
                 AppSpacing.xl.gapH,
 
                 summary.when(
-                  data: (TransactionSummary data) => _SummaryGrid(
-                    summary: data,
-                    currencyCode: currency,
-                  ),
+                  data: (TransactionSummary data) => _SummaryGrid(summary: data, currencyCode: currency),
                   loading: () => AppShimmer.box(height: 140),
                   error: (Object error, _) => Text('$error'),
                 ),
@@ -126,17 +112,12 @@ class ReportsScreen extends ConsumerWidget {
   /// Sharing rather than saving is deliberate: it lets the user decide the
   /// destination (mail, Drive, Files) without the app requesting storage
   /// permissions it does not otherwise need.
-  Future<void> _export(
-    BuildContext context,
-    WidgetRef ref, {
-    required bool asPdf,
-  }) async {
+  Future<void> _export(BuildContext context, WidgetRef ref, {required bool asPdf}) async {
     final ReportRange range = ref.read(reportRangeProvider);
     final String currency = ref.read(currencyCodeProvider);
     final Map<String, Category> categories = ref.read(categoryLookupProvider);
 
-    final List<Transaction> transactions =
-        await ref.read(reportTransactionsProvider.future);
+    final List<Transaction> transactions = await ref.read(reportTransactionsProvider.future);
 
     if (!context.mounted) return;
     if (transactions.isEmpty) {
@@ -145,8 +126,7 @@ class ReportsScreen extends ConsumerWidget {
     }
 
     const ReportExporter exporter = ReportExporter();
-    final String fileName =
-        'pocketpilot-${range.from.isoDate}-to-${range.to.isoDate}';
+    final String fileName = 'pocketpilot-${range.from.isoDate}-to-${range.to.isoDate}';
 
     final Result<File> result = asPdf
         ? await exporter.toPdf(
@@ -157,21 +137,12 @@ class ReportsScreen extends ConsumerWidget {
             currencyCode: currency,
             fileName: fileName,
           )
-        : await exporter.toCsv(
-            transactions: transactions,
-            categories: categories,
-            fileName: fileName,
-          );
+        : await exporter.toCsv(transactions: transactions, categories: categories, fileName: fileName);
 
     if (!context.mounted) return;
     await result.when(
       success: (File file) async {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: <XFile>[XFile(file.path)],
-            text: 'PocketPilot report · ${range.label}',
-          ),
-        );
+        await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)], text: 'PocketPilot report · ${range.label}'));
       },
       failure: (failure) async => AppFeedback.error(context, failure),
     );
@@ -195,15 +166,9 @@ class _PeriodSelector extends ConsumerWidget {
               selected: current == period,
               onSelected: (_) async {
                 if (period == ReportPeriod.custom) {
-                  final DateTimeRange? picked = await showDateRangePicker(
-                    context: context,
-                    firstDate: DateTime(2015),
-                    lastDate: DateTime.now(),
-                  );
+                  final DateTimeRange? picked = await showDateRangePicker(context: context, firstDate: DateTime(2015), lastDate: DateTime.now());
                   if (picked != null) {
-                    ref
-                        .read(reportRangeProvider.notifier)
-                        .setCustom(picked.start, picked.end);
+                    ref.read(reportRangeProvider.notifier).setCustom(picked.start, picked.end);
                   }
                 } else {
                   ref.read(reportRangeProvider.notifier).setPeriod(period);
@@ -229,29 +194,14 @@ class _RangeStepper extends ConsumerWidget {
 
     return Row(
       children: <Widget>[
-        IconButton(
-          onPressed: canStep
-              ? () => ref.read(reportRangeProvider.notifier).shift(-1)
-              : null,
-          icon: const Icon(Icons.chevron_left_rounded),
-        ),
+        IconButton(onPressed: canStep ? () => ref.read(reportRangeProvider.notifier).shift(-1) : null, icon: const Icon(Icons.chevron_left_rounded)),
         Expanded(
           child: AnimatedSwitcher(
             duration: 220.ms,
-            child: Text(
-              range.label,
-              key: ValueKey<String>(range.label),
-              textAlign: TextAlign.center,
-              style: context.text.titleMedium,
-            ),
+            child: Text(range.label, key: ValueKey<String>(range.label), textAlign: TextAlign.center, style: context.text.titleMedium),
           ),
         ),
-        IconButton(
-          onPressed: canStep
-              ? () => ref.read(reportRangeProvider.notifier).shift(1)
-              : null,
-          icon: const Icon(Icons.chevron_right_rounded),
-        ),
+        IconButton(onPressed: canStep ? () => ref.read(reportRangeProvider.notifier).shift(1) : null, icon: const Icon(Icons.chevron_right_rounded)),
       ],
     );
   }
@@ -287,18 +237,10 @@ class _SummaryGrid extends StatelessWidget {
             children: <Widget>[
               _Metric(
                 label: 'Net',
-                value: summary.balance.toSignedCurrency(
-                  currencyCode: currencyCode,
-                ),
-                color: summary.balance >= 0
-                    ? context.finance.income
-                    : context.finance.expense,
+                value: summary.balance.toSignedCurrency(currencyCode: currencyCode),
+                color: summary.balance >= 0 ? context.finance.income : context.finance.expense,
               ),
-              _Metric(
-                label: 'Savings rate',
-                value: summary.savingsRate.toPercent(),
-                color: context.finance.savings,
-              ),
+              _Metric(label: 'Savings rate', value: summary.savingsRate.toPercent(), color: context.finance.savings),
             ],
           ),
         ],
@@ -308,11 +250,7 @@ class _SummaryGrid extends StatelessWidget {
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _Metric({required this.label, required this.value, required this.color});
 
   final String label;
   final String value;
@@ -324,20 +262,12 @@ class _Metric extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            label,
-            style: context.text.labelSmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
-            ),
-          ),
+          Text(label, style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant)),
           AppSpacing.xs.gapH,
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: context.text.titleMedium?.copyWith(color: color),
-            ),
+            child: Text(value, style: context.text.titleMedium?.copyWith(color: color)),
           ),
         ],
       ),
@@ -350,9 +280,7 @@ class _TrendCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<SeriesPoint>> series = ref.watch(
-      reportSeriesProvider,
-    );
+    final AsyncValue<List<SeriesPoint>> series = ref.watch(reportSeriesProvider);
     final String currency = ref.watch(currencyCodeProvider);
 
     return AppCard(
@@ -361,38 +289,19 @@ class _TrendCard extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Income vs expenses',
-                  style: context.text.titleSmall,
-                ),
-              ),
-              _ChartLegend(
-                color: context.finance.income,
-                label: 'Income',
-              ),
+              Expanded(child: Text('Income vs expenses', style: context.text.titleSmall)),
+              _ChartLegend(color: context.finance.income, label: 'Income'),
               AppSpacing.md.gapW,
-              _ChartLegend(
-                color: context.finance.expense,
-                label: 'Expenses',
-              ),
+              _ChartLegend(color: context.finance.expense, label: 'Expenses'),
             ],
           ),
           AppSpacing.lg.gapH,
           series.when(
             data: (List<SeriesPoint> points) => Column(
               children: <Widget>[
-                IncomeExpenseBarChart(
-                  points: points,
-                  currencyCode: currency,
-                ),
+                IncomeExpenseBarChart(points: points, currencyCode: currency),
                 AppSpacing.xl.gapH,
-                Text(
-                  'Running balance',
-                  style: context.text.labelMedium?.copyWith(
-                    color: context.colors.onSurfaceVariant,
-                  ),
-                ),
+                Text('Running balance', style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant)),
                 AppSpacing.md.gapH,
                 BalanceLineChart(points: points, currencyCode: currency),
               ],
@@ -420,18 +329,12 @@ class _ChartLegend extends StatelessWidget {
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
         ),
         AppSpacing.xs.gapW,
         Text(
           label,
-          style: context.text.labelSmall?.copyWith(
-            color: context.colors.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
+          style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -443,9 +346,7 @@ class _BreakdownCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<CategorySlice>> slices = ref.watch(
-      reportByCategoryProvider,
-    );
+    final AsyncValue<List<CategorySlice>> slices = ref.watch(reportByCategoryProvider);
     final bool expenses = ref.watch(reportShowsExpensesProvider);
     final String currency = ref.watch(currencyCodeProvider);
 
@@ -464,24 +365,15 @@ class _BreakdownCard extends ConsumerWidget {
                   ButtonSegment<bool>(value: false, label: Text('In')),
                 ],
                 selected: <bool>{expenses},
-                onSelectionChanged: (Set<bool> selection) => ref
-                    .read(reportShowsExpensesProvider.notifier)
-                    .setExpenses(expenses: selection.first),
+                onSelectionChanged: (Set<bool> selection) => ref.read(reportShowsExpensesProvider.notifier).setExpenses(expenses: selection.first),
               ),
             ],
           ),
           AppSpacing.lg.gapH,
           slices.when(
             data: (List<CategorySlice> data) => data.isEmpty
-                ? const AppEmptyState(
-                    icon: Icons.pie_chart_outline_rounded,
-                    title: 'Nothing to show',
-                    message: 'No activity in this period.',
-                  )
-                : CategoryDonutChart(
-                    slices: data.take(8).toList(),
-                    currencyCode: currency,
-                  ),
+                ? const AppEmptyState(icon: Icons.pie_chart_outline_rounded, title: 'Nothing to show', message: 'No activity in this period.')
+                : CategoryDonutChart(slices: data.take(8).toList(), currencyCode: currency),
             loading: () => AppShimmer.box(height: 240),
             error: (Object error, _) => Text('$error'),
           ),
@@ -496,15 +388,11 @@ class _TopCategories extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<CategorySlice> slices =
-        ref.watch(reportByCategoryProvider).value ?? const <CategorySlice>[];
+    final List<CategorySlice> slices = ref.watch(reportByCategoryProvider).value ?? const <CategorySlice>[];
     if (slices.isEmpty) return const SizedBox.shrink();
 
     final String currency = ref.watch(currencyCodeProvider);
-    final double total = slices.fold<double>(
-      0,
-      (double sum, CategorySlice s) => sum + s.value,
-    );
+    final double total = slices.fold<double>(0, (double sum, CategorySlice s) => sum + s.value);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,11 +419,7 @@ class _TopCategories extends ConsumerWidget {
 }
 
 class _RankedRow extends StatelessWidget {
-  const _RankedRow({
-    required this.slice,
-    required this.share,
-    required this.currencyCode,
-  });
+  const _RankedRow({required this.slice, required this.share, required this.currencyCode});
 
   final CategorySlice slice;
   final double share;
@@ -547,13 +431,8 @@ class _RankedRow extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Expanded(
-              child: Text(slice.label, style: context.text.bodyMedium),
-            ),
-            Text(
-              slice.value.toCurrency(currencyCode: currencyCode),
-              style: context.text.titleSmall,
-            ),
+            Expanded(child: Text(slice.label, style: context.text.bodyMedium)),
+            Text(slice.value.toCurrency(currencyCode: currencyCode), style: context.text.titleSmall),
           ],
         ),
         AppSpacing.sm.gapH,
@@ -564,12 +443,7 @@ class _RankedRow extends StatelessWidget {
             curve: Curves.easeOutCubic,
             tween: Tween<double>(begin: 0, end: share),
             builder: (BuildContext context, double value, _) =>
-                LinearProgressIndicator(
-                  value: value,
-                  minHeight: 6,
-                  color: slice.color,
-                  backgroundColor: context.colors.outlineVariant,
-                ),
+                LinearProgressIndicator(value: value, minHeight: 6, color: slice.color, backgroundColor: context.colors.outlineVariant),
           ),
         ),
       ],
