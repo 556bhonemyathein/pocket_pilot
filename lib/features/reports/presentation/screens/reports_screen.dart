@@ -359,7 +359,25 @@ class _TrendCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Income vs expenses', style: context.text.titleSmall),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Income vs expenses',
+                  style: context.text.titleSmall,
+                ),
+              ),
+              _ChartLegend(
+                color: context.finance.income,
+                label: 'Income',
+              ),
+              AppSpacing.md.gapW,
+              _ChartLegend(
+                color: context.finance.expense,
+                label: 'Expenses',
+              ),
+            ],
+          ),
           AppSpacing.lg.gapH,
           series.when(
             data: (List<SeriesPoint> points) => Column(
@@ -384,6 +402,38 @@ class _TrendCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ChartLegend extends StatelessWidget {
+  const _ChartLegend({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        AppSpacing.xs.gapW,
+        Text(
+          label,
+          style: context.text.labelSmall?.copyWith(
+            color: context.colors.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

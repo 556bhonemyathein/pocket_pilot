@@ -19,6 +19,128 @@ typedef SeriesPoint = ({String label, double income, double expense});
 ///
 /// Bars beat a line for discrete periods: they say "this week" rather than
 /// implying a continuous quantity between the points.
+/// Chart axis and milestone badge helper for responsive date/time-series.
+class ChartAxisHelper {
+  const ChartAxisHelper._();
+
+  /// Computes which indices in [0, totalPoints - 1] should display an X-axis badge
+  /// given the available chart width [availableWidth].
+  static Set<int> getVisibleIndices({
+    required int totalPoints,
+    required double availableWidth,
+  }) {
+    if (totalPoints <= 0) return const <int>{};
+    if (totalPoints == 1) return const <int>{0};
+
+    // Each badge needs roughly 38-42px minimum horizontal clearance.
+    final int maxLabels = (availableWidth / 40).floor().clamp(3, 14);
+
+    if (totalPoints <= maxLabels) {
+      return Set<int>.from(List<int>.generate(totalPoints, (int i) => i));
+    }
+
+    // For a standard month range (28 to 31 days)
+    if (totalPoints >= 28 && totalPoints <= 31) {
+      final Set<int> indices = <int>{};
+      indices.add(0); // Day 1
+      final int step = maxLabels >= 12 ? 3 : (maxLabels >= 6 ? 5 : 10);
+      for (int day = step; day < totalPoints; day += step) {
+        if (totalPoints - day >= 2) {
+          indices.add(day - 1);
+        }
+      }
+      indices.add(totalPoints - 1); // Last day (Day 28, 30, or 31)
+      return indices;
+    }
+
+    // Generic adaptive step for arbitrary number of points
+    final Set<int> indices = <int>{};
+    indices.add(0);
+    final int step =
+        ((totalPoints - 1) / (maxLabels - 1)).ceil().clamp(1, totalPoints);
+    for (int i = step; i < totalPoints - 1; i += step) {
+      if ((totalPoints - 1) - i >= (step * 0.6).round()) {
+        indices.add(i);
+      }
+    }
+    indices.add(totalPoints - 1);
+    return indices;
+  }
+
+  /// Builds a modern, stylized milestone date badge.
+  static Widget buildMilestoneBadge({
+    required BuildContext context,
+    required String label,
+    required bool isMilestone,
+    required bool isBoundary,
+    required bool isDateNumber,
+  }) {
+    if (!isDateNumber) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.xs),
+        child: Center(
+          child: Text(
+            label,
+            style: context.text.labelSmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final ColorScheme colors = context.colors;
+    final Color badgeBg = isBoundary
+        ? colors.primary.withValues(alpha: 0.12)
+        : (isMilestone
+            ? colors.surfaceContainerHighest.withValues(alpha: 0.55)
+            : Colors.transparent);
+
+    final Color textColor = isBoundary
+        ? colors.primary
+        : (isMilestone ? colors.onSurface : colors.onSurfaceVariant);
+
+    final Border? border = isBoundary
+        ? Border.all(color: colors.primary.withValues(alpha: 0.35), width: 1)
+        : (isMilestone
+            ? Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.45),
+                width: 1,
+              )
+            : null);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+          decoration: BoxDecoration(
+            color: badgeBg,
+            borderRadius: BorderRadius.circular(6),
+            border: border,
+          ),
+          child: Text(
+            label,
+            style: context.text.labelSmall?.copyWith(
+              fontSize: 10,
+              fontWeight:
+                  isBoundary || isMilestone ? FontWeight.w700 : FontWeight.w500,
+              color: textColor,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Income vs expense over time, as grouped bars.
+///
+/// Bars beat a line for discrete periods: they say "this week" rather than
+/// implying a continuous quantity between the points.
 class IncomeExpenseBarChart extends StatelessWidget {
   const IncomeExpenseBarChart({
     required this.points,
@@ -41,99 +163,152 @@ class IncomeExpenseBarChart extends StatelessWidget {
     // A flat-zero chart would divide by zero on the axis interval.
     final double top = maxValue <= 0 ? 100 : maxValue * 1.25;
 
-    return SizedBox(
-      height: height,
-      child: BarChart(
-        BarChartData(
-          maxY: top,
-          alignment: BarChartAlignment.spaceAround,
-          borderData: FlBorderData(show: false),
-          gridData: FlGridData(
-            drawVerticalLine: false,
-            horizontalInterval: top / 4,
-            getDrawingHorizontalLine: (double value) => FlLine(
-              color: context.colors.outlineVariant.withValues(alpha: 0.5),
-              strokeWidth: 1,
-            ),
-          ),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(),
-            rightTitles: const AxisTitles(),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 44,
-                interval: top / 4,
-                getTitlesWidget: (double value, TitleMeta meta) => Text(
-                  value.toCompactCurrency(currencyCode: currencyCode),
-                  style: context.text.labelSmall?.copyWith(
-                    color: context.colors.onSurfaceVariant,
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double availablePlotWidth =
+            (constraints.maxWidth - 56).clamp(100.0, 2000.0);
+        final double groupSlot = availablePlotWidth / points.length;
+
+        // Dynamic bar width and space based on slot width
+        final double barWidth = (groupSlot * 0.32).clamp(2.5, 10.0);
+        final double barsSpace = (groupSlot * 0.12).clamp(1.0, 4.0);
+
+        final Set<int> visibleIndices = ChartAxisHelper.getVisibleIndices(
+          totalPoints: points.length,
+          availableWidth: availablePlotWidth,
+        );
+
+        return SizedBox(
+          height: height,
+          child: BarChart(
+            BarChartData(
+              maxY: top,
+              alignment: BarChartAlignment.spaceAround,
+              borderData: FlBorderData(show: false),
+              gridData: FlGridData(
+                drawVerticalLine: false,
+                horizontalInterval: top / 4,
+                getDrawingHorizontalLine: (double value) => FlLine(
+                  color: context.colors.outlineVariant.withValues(alpha: 0.5),
+                  strokeWidth: 1,
+                ),
+              ),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(),
+                rightTitles: const AxisTitles(),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 44,
+                    interval: top / 4,
+                    getTitlesWidget: (double value, TitleMeta meta) => Text(
+                      value.toCompactCurrency(currencyCode: currencyCode),
+                      style: context.text.labelSmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 32,
+                    interval: 1,
+                    getTitlesWidget: (double value, TitleMeta meta) {
+                      final int index = value.round();
+                      if (index < 0 || index >= points.length) {
+                        return const SizedBox.shrink();
+                      }
+                      if ((value - index).abs() > 0.1) {
+                        return const SizedBox.shrink();
+                      }
+                      if (!visibleIndices.contains(index)) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final bool isDateNumber =
+                          int.tryParse(points[index].label) != null;
+                      final bool isBoundary =
+                          index == 0 || index == points.length - 1;
+                      final bool isMilestone =
+                          isBoundary || (index + 1) % 5 == 0;
+
+                      return ChartAxisHelper.buildMilestoneBadge(
+                        context: context,
+                        label: points[index].label,
+                        isMilestone: isMilestone,
+                        isBoundary: isBoundary,
+                        isDateNumber: isDateNumber,
+                      );
+                    },
                   ),
                 ),
               ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 28,
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  final int index = value.toInt();
-                  if (index < 0 || index >= points.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.sm),
-                    child: Text(
-                      points[index].label,
-                      style: context.text.labelSmall?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          barTouchData: BarTouchData(
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => context.colors.inverseSurface,
-              getTooltipItem:
-                  (
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => context.colors.inverseSurface,
+                  getTooltipItem: (
                     BarChartGroupData group,
                     int groupIndex,
                     BarChartRodData rod,
                     int rodIndex,
-                  ) => BarTooltipItem(
-                    rod.toY.toCurrency(currencyCode: currencyCode),
-                    context.text.labelMedium!.copyWith(
-                      color: context.colors.onInverseSurface,
-                    ),
+                  ) {
+                    final int idx = group.x.toInt();
+                    final String dayLabel =
+                        (idx >= 0 && idx < points.length) ? points[idx].label : '';
+                    final bool isIncome = rodIndex == 0;
+                    final String type = isIncome ? 'Income' : 'Expense';
+                    final String formattedVal =
+                        rod.toY.toCurrency(currencyCode: currencyCode);
+
+                    return BarTooltipItem(
+                      dayLabel.isNotEmpty ? '$dayLabel\n' : '',
+                      context.text.labelSmall!.copyWith(
+                        color: context.colors.onInverseSurface
+                            .withValues(alpha: 0.7),
+                        fontWeight: FontWeight.normal,
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: '$type: $formattedVal',
+                          style: context.text.labelMedium!.copyWith(
+                            color: isIncome
+                                ? const Color(0xFF4ADE80)
+                                : const Color(0xFFF87171),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              barGroups: <BarChartGroupData>[
+                for (int i = 0; i < points.length; i++)
+                  BarChartGroupData(
+                    x: i,
+                    barsSpace: barsSpace,
+                    barRods: <BarChartRodData>[
+                      BarChartRodData(
+                        toY: points[i].income,
+                        width: barWidth,
+                        color: context.finance.income,
+                        borderRadius: BorderRadius.circular(barWidth / 2),
+                      ),
+                      BarChartRodData(
+                        toY: points[i].expense,
+                        width: barWidth,
+                        color: context.finance.expense,
+                        borderRadius: BorderRadius.circular(barWidth / 2),
+                      ),
+                    ],
                   ),
+              ],
             ),
           ),
-          barGroups: <BarChartGroupData>[
-            for (int i = 0; i < points.length; i++)
-              BarChartGroupData(
-                x: i,
-                barsSpace: 4,
-                barRods: <BarChartRodData>[
-                  BarChartRodData(
-                    toY: points[i].income,
-                    width: 8,
-                    color: context.finance.income,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  BarChartRodData(
-                    toY: points[i].expense,
-                    width: 8,
-                    color: context.finance.expense,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ],
-              ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -166,74 +341,157 @@ class BalanceLineChart extends StatelessWidget {
         ),
     ];
 
-    return SizedBox(
-      height: height,
-      child: LineChart(
-        LineChartData(
-          borderData: FlBorderData(show: false),
-          gridData: const FlGridData(show: false),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(),
-            rightTitles: const AxisTitles(),
-            leftTitles: const AxisTitles(),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 26,
-                interval: (points.length / 4).clamp(1, 100).toDouble(),
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  final int index = value.toInt();
-                  if (index < 0 || index >= points.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Text(
-                    points[index].label,
-                    style: context.text.labelSmall?.copyWith(
-                      color: context.colors.onSurfaceVariant,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          lineTouchData: LineTouchData(
-            touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => context.colors.inverseSurface,
-              getTooltipItems: (List<LineBarSpot> spots) => spots
-                  .map(
-                    (LineBarSpot spot) => LineTooltipItem(
-                      spot.y.toCurrency(currencyCode: currencyCode),
-                      context.text.labelMedium!.copyWith(
-                        color: context.colors.onInverseSurface,
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          lineBarsData: <LineChartBarData>[
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              curveSmoothness: 0.25,
-              barWidth: 3,
-              color: context.colors.primary,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    context.colors.primary.withValues(alpha: 0.28),
-                    context.colors.primary.withValues(alpha: 0),
-                  ],
+    final double minBal = spots
+        .map((FlSpot s) => s.y)
+        .fold<double>(0, (double a, double b) => a < b ? a : b);
+    final double maxBal = spots
+        .map((FlSpot s) => s.y)
+        .fold<double>(0, (double a, double b) => a > b ? a : b);
+    final double balanceSpread = (maxBal - minBal).abs();
+    final double lineTop =
+        balanceSpread == 0 ? 100 : (maxBal > 0 ? maxBal * 1.25 : 10);
+    final double lineBottom =
+        balanceSpread == 0 ? 0 : (minBal < 0 ? minBal * 1.25 : 0);
+    final double lineInterval =
+        ((lineTop - lineBottom) / 4).clamp(1.0, double.infinity);
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double availablePlotWidth =
+            (constraints.maxWidth - 56).clamp(100.0, 2000.0);
+        final Set<int> visibleIndices = ChartAxisHelper.getVisibleIndices(
+          totalPoints: points.length,
+          availableWidth: availablePlotWidth,
+        );
+
+        return SizedBox(
+          height: height,
+          child: LineChart(
+            LineChartData(
+              minY: lineBottom,
+              maxY: lineTop,
+              borderData: FlBorderData(show: false),
+              gridData: FlGridData(
+                drawVerticalLine: false,
+                horizontalInterval: lineInterval,
+                getDrawingHorizontalLine: (double value) => FlLine(
+                  color: context.colors.outlineVariant.withValues(alpha: 0.3),
+                  strokeWidth: 1,
                 ),
               ),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(),
+                rightTitles: const AxisTitles(),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 44,
+                    interval: lineInterval,
+                    getTitlesWidget: (double value, TitleMeta meta) => Text(
+                      value.toCompactCurrency(currencyCode: currencyCode),
+                      style: context.text.labelSmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 32,
+                    interval: 1,
+                    getTitlesWidget: (double value, TitleMeta meta) {
+                      final int index = value.round();
+                      if (index < 0 || index >= points.length) {
+                        return const SizedBox.shrink();
+                      }
+                      if ((value - index).abs() > 0.1) {
+                        return const SizedBox.shrink();
+                      }
+                      if (!visibleIndices.contains(index)) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final bool isDateNumber =
+                          int.tryParse(points[index].label) != null;
+                      final bool isBoundary =
+                          index == 0 || index == points.length - 1;
+                      final bool isMilestone =
+                          isBoundary || (index + 1) % 5 == 0;
+
+                      return ChartAxisHelper.buildMilestoneBadge(
+                        context: context,
+                        label: points[index].label,
+                        isMilestone: isMilestone,
+                        isBoundary: isBoundary,
+                        isDateNumber: isDateNumber,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (_) => context.colors.inverseSurface,
+                  getTooltipItems: (List<LineBarSpot> spots) => spots
+                      .map(
+                        (LineBarSpot spot) {
+                          final int index = spot.x.toInt();
+                          final String label =
+                              (index >= 0 && index < points.length)
+                                  ? points[index].label
+                                  : '';
+                          return LineTooltipItem(
+                            label.isNotEmpty ? '$label\n' : '',
+                            context.text.labelSmall!.copyWith(
+                              color: context.colors.onInverseSurface
+                                  .withValues(alpha: 0.7),
+                            ),
+                            children: <TextSpan>[
+                              TextSpan(
+                                text: spot.y.toSignedCurrency(
+                                  currencyCode: currencyCode,
+                                ),
+                                style: context.text.labelMedium!.copyWith(
+                                  color: spot.y >= 0
+                                      ? const Color(0xFF4ADE80)
+                                      : const Color(0xFFF87171),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      )
+                      .toList(),
+                ),
+              ),
+              lineBarsData: <LineChartBarData>[
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  curveSmoothness: 0.25,
+                  barWidth: 3,
+                  color: context.colors.primary,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: <Color>[
+                        context.colors.primary.withValues(alpha: 0.28),
+                        context.colors.primary.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
