@@ -656,7 +656,7 @@ class _QuickActions extends ConsumerWidget {
           Expanded(
             child: AppCard(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-              onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}'),
+              onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}', extra: actions[i].type),
               child: Column(
                 children: <Widget>[
                   Icon(actions[i].icon, size: 20, color: actions[i].color),
@@ -696,6 +696,7 @@ class _StatRow extends StatelessWidget {
               currencyCode: currencyCode,
               color: context.finance.income,
               icon: Icons.south_west_rounded,
+              onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}', extra: TransactionType.income),
             ),
           ),
           AppSpacing.md.gapW,
@@ -706,6 +707,7 @@ class _StatRow extends StatelessWidget {
               currencyCode: currencyCode,
               color: context.finance.expense,
               icon: Icons.north_east_rounded,
+              onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}', extra: TransactionType.expense),
             ),
           ),
           AppSpacing.md.gapW,

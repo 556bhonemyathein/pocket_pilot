@@ -22,6 +22,7 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/transactions/presentation/screens/transaction_form_screen.dart';
 import '../../features/transactions/presentation/screens/transaction_search_screen.dart';
 import '../../features/transactions/presentation/screens/transactions_screen.dart';
+import '../../shared/models/enums.dart';
 import '../../shared/models/transaction.dart';
 import '../../shared/providers/core_providers.dart';
 import '../widgets/app_shell.dart';
@@ -56,8 +57,7 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
       if (auth.isLoading || auth.value is AuthUnknown) return null;
 
       final bool isAuthenticated = auth.value?.isAuthenticated ?? false;
-      final bool onboardingSeen =
-          ref.read(preferencesServiceProvider).onboardingSeen;
+      final bool onboardingSeen = ref.read(preferencesServiceProvider).onboardingSeen;
       final String location = state.matchedLocation;
       final bool isPublic = AppRoutes.publicRoutes.contains(location);
 
@@ -73,37 +73,19 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
       return null;
     },
     routes: <RouteBase>[
-      GoRoute(
-        path: AppRoutes.splash,
-        builder: (_, _) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.onboarding,
-        builder: (_, _) => const OnboardingScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (_, _) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.register,
-        builder: (_, _) => const RegisterScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.forgotPassword,
-        builder: (_, _) => const ForgotPasswordScreen(),
-      ),
+      GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
+      GoRoute(path: AppRoutes.onboarding, builder: (_, _) => const OnboardingScreen()),
+      GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginScreen()),
+      GoRoute(path: AppRoutes.register, builder: (_, _) => const RegisterScreen()),
+      GoRoute(path: AppRoutes.forgotPassword, builder: (_, _) => const ForgotPasswordScreen()),
       GoRoute(
         path: AppRoutes.otp,
-        builder: (_, GoRouterState state) =>
-            OtpScreen(email: state.uri.queryParameters['email'] ?? ''),
+        builder: (_, GoRouterState state) => OtpScreen(email: state.uri.queryParameters['email'] ?? ''),
       ),
       GoRoute(
         path: AppRoutes.resetPassword,
-        builder: (_, GoRouterState state) => ResetPasswordScreen(
-          email: state.uri.queryParameters['email'] ?? '',
-          code: state.uri.queryParameters['code'] ?? '',
-        ),
+        builder: (_, GoRouterState state) =>
+            ResetPasswordScreen(email: state.uri.queryParameters['email'] ?? '', code: state.uri.queryParameters['code'] ?? ''),
       ),
 
       // ── Tabbed shell ────────────────────────────────────────────────────────
@@ -111,8 +93,7 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
       // remembers its own scroll position and push stack — the behaviour users
       // expect from a bottom nav bar.
       StatefulShellRoute.indexedStack(
-        builder: (_, _, StatefulNavigationShell shell) =>
-            AppShell(shell: shell),
+        builder: (_, _, StatefulNavigationShell shell) => AppShell(shell: shell),
         branches: <StatefulShellBranch>[
           StatefulShellBranch(
             routes: <RouteBase>[
@@ -130,22 +111,13 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
                 builder: (_, _) => const TransactionsScreen(),
                 routes: <RouteBase>[
                   _transactionFormRoute('tx-form-list'),
-                  GoRoute(
-                    path: AppRoutes.search,
-                    name: AppRoutes.search,
-                    builder: (_, _) => const TransactionSearchScreen(),
-                  ),
+                  GoRoute(path: AppRoutes.search, name: AppRoutes.search, builder: (_, _) => const TransactionSearchScreen()),
                 ],
               ),
             ],
           ),
           StatefulShellBranch(
-            routes: <RouteBase>[
-              GoRoute(
-                path: AppRoutes.reports,
-                builder: (_, _) => const ReportsScreen(),
-              ),
-            ],
+            routes: <RouteBase>[GoRoute(path: AppRoutes.reports, builder: (_, _) => const ReportsScreen())],
           ),
           StatefulShellBranch(
             routes: <RouteBase>[
@@ -153,27 +125,13 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
                 path: AppRoutes.profile,
                 builder: (_, _) => const ProfileScreen(),
                 routes: <RouteBase>[
-                  GoRoute(
-                    path: AppRoutes.editProfile,
-                    name: AppRoutes.editProfile,
-                    builder: (_, _) => const EditProfileScreen(),
-                  ),
-                  GoRoute(
-                    path: AppRoutes.changePassword,
-                    name: AppRoutes.changePassword,
-                    builder: (_, _) => const ChangePasswordScreen(),
-                  ),
+                  GoRoute(path: AppRoutes.editProfile, name: AppRoutes.editProfile, builder: (_, _) => const EditProfileScreen()),
+                  GoRoute(path: AppRoutes.changePassword, name: AppRoutes.changePassword, builder: (_, _) => const ChangePasswordScreen()),
                   GoRoute(
                     path: AppRoutes.settings,
                     name: AppRoutes.settings,
                     builder: (_, _) => const SettingsScreen(),
-                    routes: <RouteBase>[
-                      GoRoute(
-                        path: AppRoutes.about,
-                        name: AppRoutes.about,
-                        builder: (_, _) => const AboutScreen(),
-                      ),
-                    ],
+                    routes: <RouteBase>[GoRoute(path: AppRoutes.about, name: AppRoutes.about, builder: (_, _) => const AboutScreen())],
                   ),
                   GoRoute(
                     path: AppRoutes.categories,
@@ -183,8 +141,7 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
                       GoRoute(
                         path: AppRoutes.categoryForm,
                         name: AppRoutes.categoryForm,
-                        builder: (_, GoRouterState state) =>
-                            CategoryFormScreen(categoryId: state.extra as String?),
+                        builder: (_, GoRouterState state) => CategoryFormScreen(categoryId: state.extra as String?),
                       ),
                     ],
                   ),
@@ -195,9 +152,7 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
         ],
       ),
     ],
-    errorBuilder: (BuildContext context, GoRouterState state) => Scaffold(
-      body: Center(child: Text('Route not found: ${state.uri}')),
-    ),
+    errorBuilder: (BuildContext context, GoRouterState state) => Scaffold(body: Center(child: Text('Route not found: ${state.uri}'))),
   );
 }, name: 'router');
 
@@ -210,18 +165,32 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
 GoRoute _transactionFormRoute(String name) => GoRoute(
   path: AppRoutes.transactionForm,
   name: name,
-  builder: (_, GoRouterState state) =>
-      TransactionFormScreen(existing: state.extra as Transaction?),
+  builder: (_, GoRouterState state) {
+    Transaction? existing;
+    TransactionType? initialType;
+
+    if (state.extra is Transaction) {
+      existing = state.extra as Transaction;
+    } else if (state.extra is TransactionType) {
+      initialType = state.extra as TransactionType;
+    } else if (state.uri.queryParameters.containsKey('type')) {
+      final String? typeName = state.uri.queryParameters['type'];
+      for (final TransactionType t in TransactionType.values) {
+        if (t.name == typeName) {
+          initialType = t;
+          break;
+        }
+      }
+    }
+
+    return TransactionFormScreen(existing: existing, initialType: initialType);
+  },
 );
 
 /// Adapts Riverpod's auth state to the `Listenable` go_router expects.
 class _RouterRefresh extends ChangeNotifier {
   _RouterRefresh(this._ref) {
-    _subscription = _ref.listen<AsyncValue<AuthState>>(
-      authProvider,
-      (_, _) => notifyListeners(),
-      fireImmediately: false,
-    );
+    _subscription = _ref.listen<AsyncValue<AuthState>>(authProvider, (_, _) => notifyListeners(), fireImmediately: false);
   }
 
   final Ref _ref;

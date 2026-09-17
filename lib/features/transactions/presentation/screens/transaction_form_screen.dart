@@ -23,18 +23,19 @@ import '../providers/transaction_providers.dart';
 /// screen would be the same 300 lines with a different title and would drift
 /// out of sync the first time a field is added.
 class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key, this.existing});
+  const TransactionFormScreen({super.key, this.existing, this.initialType});
 
   /// `null` for create, populated for edit.
   final Transaction? existing;
 
+  /// Default transaction type when creating a new transaction.
+  final TransactionType? initialType;
+
   @override
-  ConsumerState<TransactionFormScreen> createState() =>
-      _TransactionFormScreenState();
+  ConsumerState<TransactionFormScreen> createState() => _TransactionFormScreenState();
 }
 
-class _TransactionFormScreenState
-    extends ConsumerState<TransactionFormScreen> {
+class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _amount;
   late final TextEditingController _note;
@@ -58,12 +59,10 @@ class _TransactionFormScreenState
     super.initState();
     final Transaction? existing = widget.existing;
 
-    _amount = TextEditingController(
-      text: existing?.amount.toStringAsFixed(2) ?? '',
-    );
+    _amount = TextEditingController(text: existing?.amount.toStringAsFixed(2) ?? '');
     _note = TextEditingController(text: existing?.note ?? '');
     _transferTo = TextEditingController(text: existing?.transferTo ?? '');
-    _type = existing?.type ?? TransactionType.expense;
+    _type = existing?.type ?? widget.initialType ?? TransactionType.expense;
     _date = existing?.date ?? DateTime.now();
     _recurrence = existing?.recurrence ?? RecurrenceRule.none;
     _tags = List<String>.of(existing?.tags ?? const <String>[]);
@@ -86,9 +85,7 @@ class _TransactionFormScreenState
   void _onTypeChanged(TransactionType type) {
     setState(() {
       _type = type;
-      final Category? current = _categoryId == null
-          ? null
-          : ref.read(categoryLookupProvider)[_categoryId];
+      final Category? current = _categoryId == null ? null : ref.read(categoryLookupProvider)[_categoryId];
       if (current != null && !current.kind.allows(type)) _categoryId = null;
     });
   }
@@ -102,18 +99,9 @@ class _TransactionFormScreenState
     );
     if (picked == null || !mounted) return;
 
-    final TimeOfDay? time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_date),
-    );
+    final TimeOfDay? time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_date));
     setState(() {
-      _date = DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        time?.hour ?? _date.hour,
-        time?.minute ?? _date.minute,
-      );
+      _date = DateTime(picked.year, picked.month, picked.day, time?.hour ?? _date.hour, time?.minute ?? _date.minute);
     });
   }
 
@@ -156,9 +144,7 @@ class _TransactionFormScreenState
 
     final double amount = double.parse(_amount.text);
     final String currency = ref.read(currencyCodeProvider);
-    final TransactionController controller = ref.read(
-      transactionControllerProvider.notifier,
-    );
+    final TransactionController controller = ref.read(transactionControllerProvider.notifier);
 
     final Failure? failure = _isEditing
         ? await controller.edit(
@@ -171,9 +157,7 @@ class _TransactionFormScreenState
               tags: _tags,
               receiptPath: _receiptPath,
               recurrence: _recurrence,
-              transferTo: _type == TransactionType.transfer
-                  ? _transferTo.text.trim()
-                  : null,
+              transferTo: _type == TransactionType.transfer ? _transferTo.text.trim() : null,
             ),
           )
         : await controller.create(
@@ -186,9 +170,7 @@ class _TransactionFormScreenState
             tags: _tags,
             receiptPath: _receiptPath,
             recurrence: _recurrence,
-            transferTo: _type == TransactionType.transfer
-                ? _transferTo.text.trim()
-                : null,
+            transferTo: _type == TransactionType.transfer ? _transferTo.text.trim() : null,
           );
 
     if (!mounted) return;
@@ -198,10 +180,7 @@ class _TransactionFormScreenState
     });
 
     if (failure == null) {
-      AppFeedback.success(
-        context,
-        _isEditing ? 'Transaction updated' : 'Transaction saved',
-      );
+      AppFeedback.success(context, _isEditing ? 'Transaction updated' : 'Transaction saved');
       Navigator.of(context).pop();
     } else if (failure is! ValidationFailure) {
       AppFeedback.error(context, failure);
@@ -218,9 +197,7 @@ class _TransactionFormScreenState
     );
     if (!confirmed || !mounted) return;
 
-    final Failure? failure = await ref
-        .read(transactionControllerProvider.notifier)
-        .delete(widget.existing!.id);
+    final Failure? failure = await ref.read(transactionControllerProvider.notifier).delete(widget.existing!.id);
 
     if (!mounted) return;
     if (failure != null) {
@@ -233,22 +210,13 @@ class _TransactionFormScreenState
 
   @override
   Widget build(BuildContext context) {
-    final List<Category> categories = ref.watch(
-      categoriesByTypeProvider(_type),
-    );
+    final List<Category> categories = ref.watch(categoriesByTypeProvider(_type));
     final String currency = ref.watch(currencyCodeProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit transaction' : 'New transaction'),
-        actions: <Widget>[
-          if (_isEditing)
-            IconButton(
-              tooltip: 'Delete',
-              onPressed: _delete,
-              icon: const Icon(Icons.delete_outline_rounded),
-            ),
-        ],
+        actions: <Widget>[if (_isEditing) IconButton(tooltip: 'Delete', onPressed: _delete, icon: const Icon(Icons.delete_outline_rounded))],
       ),
       body: SafeArea(
         child: Form(
@@ -263,12 +231,7 @@ class _TransactionFormScreenState
               AppCard(
                 child: Column(
                   children: <Widget>[
-                    Text(
-                      'Amount',
-                      style: context.text.labelMedium?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                      ),
-                    ),
+                    Text('Amount', style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant)),
                     AppSpacing.sm.gapH,
                     AppTextField.amount(
                       controller: _amount,
@@ -294,22 +257,12 @@ class _TransactionFormScreenState
               ),
               if (_fieldErrors['category'] != null) ...<Widget>[
                 AppSpacing.sm.gapH,
-                Text(
-                  _fieldErrors['category']!.first,
-                  style: context.text.bodySmall?.copyWith(
-                    color: context.colors.error,
-                  ),
-                ),
+                Text(_fieldErrors['category']!.first, style: context.text.bodySmall?.copyWith(color: context.colors.error)),
               ],
               AppSpacing.xl.gapH,
 
               // ── Date ──────────────────────────────────────────────────────
-              _FormRow(
-                icon: Icons.calendar_today_rounded,
-                label: 'Date',
-                value: _date.formattedWithTime,
-                onTap: _pickDate,
-              ),
+              _FormRow(icon: Icons.calendar_today_rounded, label: 'Date', value: _date.formattedWithTime, onTap: _pickDate),
               const Divider(height: AppSpacing.xxl),
 
               // ── Recurrence ────────────────────────────────────────────────
@@ -326,19 +279,13 @@ class _TransactionFormScreenState
                     child: RadioGroup<RecurrenceRule>(
                       groupValue: _recurrence,
                       onChanged: (RecurrenceRule? value) {
-                        setState(
-                          () => _recurrence = value ?? RecurrenceRule.none,
-                        );
+                        setState(() => _recurrence = value ?? RecurrenceRule.none);
                         Navigator.of(context).pop();
                       },
                       child: Column(
                         children: <Widget>[
-                          for (final RecurrenceRule rule
-                              in RecurrenceRule.values)
-                            RadioListTile<RecurrenceRule>(
-                              value: rule,
-                              title: Text(rule.label),
-                            ),
+                          for (final RecurrenceRule rule in RecurrenceRule.values)
+                            RadioListTile<RecurrenceRule>(value: rule, title: Text(rule.label)),
                         ],
                       ),
                     ),
@@ -362,9 +309,7 @@ class _TransactionFormScreenState
                           errorText: _fieldErrors['transferTo']?.firstOrNull,
                         ),
                       )
-                    : const SizedBox.shrink(
-                        key: ValueKey<String>('no-transfer'),
-                      ),
+                    : const SizedBox.shrink(key: ValueKey<String>('no-transfer')),
               ),
 
               // ── Note ──────────────────────────────────────────────────────
@@ -386,11 +331,7 @@ class _TransactionFormScreenState
                 runSpacing: AppSpacing.sm,
                 children: <Widget>[
                   for (final String tag in _tags)
-                    InputChip(
-                      label: Text(tag),
-                      onDeleted: () =>
-                          setState(() => _tags = _tags.where((String t) => t != tag).toList()),
-                    ),
+                    InputChip(label: Text(tag), onDeleted: () => setState(() => _tags = _tags.where((String t) => t != tag).toList())),
                 ],
               ),
               AppSpacing.sm.gapH,
@@ -400,19 +341,12 @@ class _TransactionFormScreenState
                 prefixIcon: Icons.label_outline_rounded,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _addTag(),
-                suffix: IconButton(
-                  onPressed: _addTag,
-                  icon: const Icon(Icons.add_rounded, size: 20),
-                ),
+                suffix: IconButton(onPressed: _addTag, icon: const Icon(Icons.add_rounded, size: 20)),
               ),
               AppSpacing.xl.gapH,
 
               // ── Receipt ───────────────────────────────────────────────────
-              _ReceiptField(
-                path: _receiptPath,
-                onPick: _pickReceipt,
-                onClear: () => setState(() => _receiptPath = null),
-              ),
+              _ReceiptField(path: _receiptPath, onPick: _pickReceipt, onClear: () => setState(() => _receiptPath = null)),
               AppSpacing.xxxl.gapH,
 
               AppButton(
@@ -460,23 +394,15 @@ class _TypeSelector extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: 220.ms,
                   curve: Curves.easeOut,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.md,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: selected == type
-                        ? colorFor(type).withValues(alpha: 0.16)
-                        : Colors.transparent,
+                    color: selected == type ? colorFor(type).withValues(alpha: 0.16) : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Center(
                     child: Text(
                       type.label,
-                      style: context.text.labelLarge?.copyWith(
-                        color: selected == type
-                            ? colorFor(type)
-                            : context.colors.onSurfaceVariant,
-                      ),
+                      style: context.text.labelLarge?.copyWith(color: selected == type ? colorFor(type) : context.colors.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -490,11 +416,7 @@ class _TypeSelector extends StatelessWidget {
 
 /// Horizontal category strip.
 class _CategoryPicker extends StatelessWidget {
-  const _CategoryPicker({
-    required this.categories,
-    required this.selectedId,
-    required this.onSelected,
-  });
+  const _CategoryPicker({required this.categories, required this.selectedId, required this.onSelected});
 
   final List<Category> categories;
   final String? selectedId;
@@ -505,9 +427,7 @@ class _CategoryPicker extends StatelessWidget {
     if (categories.isEmpty) {
       return Text(
         'No categories for this type yet — add one in Profile → Categories.',
-        style: context.text.bodySmall?.copyWith(
-          color: context.colors.onSurfaceVariant,
-        ),
+        style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
       );
     }
 
@@ -528,29 +448,16 @@ class _CategoryPicker extends StatelessWidget {
               width: 76,
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? category.color.withValues(alpha: 0.16)
-                    : Colors.transparent,
+                color: isSelected ? category.color.withValues(alpha: 0.16) : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: isSelected
-                      ? category.color
-                      : context.colors.outlineVariant,
-                  width: isSelected ? 1.6 : 1,
-                ),
+                border: Border.all(color: isSelected ? category.color : context.colors.outlineVariant, width: isSelected ? 1.6 : 1),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Icon(category.icon, size: 22, color: category.color),
                   AppSpacing.sm.gapH,
-                  Text(
-                    category.name,
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.labelSmall,
-                  ),
+                  Text(category.name, maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: context.text.labelSmall),
                 ],
               ),
             ),
@@ -562,12 +469,7 @@ class _CategoryPicker extends StatelessWidget {
 }
 
 class _FormRow extends StatelessWidget {
-  const _FormRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
+  const _FormRow({required this.icon, required this.label, required this.value, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -587,18 +489,9 @@ class _FormRow extends StatelessWidget {
             AppSpacing.md.gapW,
             Text(label, style: context.text.bodyMedium),
             const Spacer(),
-            Text(
-              value,
-              style: context.text.bodyMedium?.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
-            ),
+            Text(value, style: context.text.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant)),
             AppSpacing.sm.gapW,
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 18,
-              color: context.colors.onSurfaceVariant,
-            ),
+            Icon(Icons.chevron_right_rounded, size: 18, color: context.colors.onSurfaceVariant),
           ],
         ),
       ),
@@ -607,11 +500,7 @@ class _FormRow extends StatelessWidget {
 }
 
 class _ReceiptField extends StatelessWidget {
-  const _ReceiptField({
-    required this.path,
-    required this.onPick,
-    required this.onClear,
-  });
+  const _ReceiptField({required this.path, required this.onPick, required this.onClear});
 
   final String? path;
   final VoidCallback onPick;
@@ -625,33 +514,18 @@ class _ReceiptField extends StatelessWidget {
         Text('Receipt', style: context.text.labelMedium),
         AppSpacing.sm.gapH,
         if (path == null)
-          OutlinedButton.icon(
-            onPressed: onPick,
-            icon: const Icon(Icons.attach_file_rounded, size: 18),
-            label: const Text('Attach a photo'),
-          )
+          OutlinedButton.icon(onPressed: onPick, icon: const Icon(Icons.attach_file_rounded, size: 18), label: const Text('Attach a photo'))
         else
           AppCard(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
               children: <Widget>[
-                Icon(
-                  Icons.image_outlined,
-                  color: context.colors.primary,
-                ),
+                Icon(Icons.image_outlined, color: context.colors.primary),
                 AppSpacing.md.gapW,
                 Expanded(
-                  child: Text(
-                    path!.split(RegExp(r'[/\\]')).last,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.bodySmall,
-                  ),
+                  child: Text(path!.split(RegExp(r'[/\\]')).last, maxLines: 1, overflow: TextOverflow.ellipsis, style: context.text.bodySmall),
                 ),
-                IconButton(
-                  onPressed: onClear,
-                  icon: const Icon(Icons.close_rounded, size: 18),
-                ),
+                IconButton(onPressed: onClear, icon: const Icon(Icons.close_rounded, size: 18)),
               ],
             ),
           ),
