@@ -50,8 +50,8 @@ class DashboardScreen extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: <Widget>[
           SliverAppBar(
-            floating: true,
-            pinned: false,
+            pinned: true,
+            floating: false,
             toolbarHeight: 64,
             titleSpacing: AppSpacing.page,
             backgroundColor: context.isDark ? context.colors.surface : Colors.white,
@@ -67,7 +67,7 @@ class DashboardScreen extends ConsumerWidget {
                   ref.watch(greetingTimeOfDayProvider),
                   style: context.text.titleSmall?.copyWith(
                     color: context.isDark ? Colors.white : const Color(0xFF0F172A),
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                     fontSize: 15,
                     letterSpacing: -0.2,
                   ),
