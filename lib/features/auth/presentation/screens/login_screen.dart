@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,10 +101,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     AppSpacing.xxl.gapH,
-                    Text('Welcome back', style: context.text.displaySmall),
+                    Text('welcome_back'.tr(), style: context.text.displaySmall),
                     AppSpacing.sm.gapH,
                     Text(
-                      'Sign in to keep flying through your finances.',
+                      'sign_in_to_keep_flying_through_your_finances'.tr(),
                       style: context.text.bodyMedium?.copyWith(
                         color: context.colors.onSurfaceVariant,
                       ),
@@ -116,7 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                     AppTextField(
                       controller: _email,
-                      label: 'Email',
+                      label: 'email'.tr(),
                       hint: 'you@example.com',
                       prefixIcon: Icons.mail_outline_rounded,
                       keyboardType: TextInputType.emailAddress,
@@ -126,13 +127,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: (String? value) =>
                           (value ?? '').isValidEmail
                           ? null
-                          : 'Enter a valid email address',
+                          : 'enter_a_valid_email_address'.tr(),
                     ),
                     AppSpacing.lg.gapH,
 
                     AppTextField(
                       controller: _password,
-                      label: 'Password',
+                      label: 'password'.tr(),
                       hint: '••••••••',
                       prefixIcon: Icons.lock_outline_rounded,
                       obscureText: true,
@@ -143,7 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: (String? value) =>
                           (value ?? '').isNotEmpty
                           ? null
-                          : 'Enter your password',
+                          : 'enter_your_password'.tr(),
                     ),
                     AppSpacing.sm.gapH,
 
@@ -154,19 +155,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onChanged: (bool? value) =>
                               setState(() => _rememberMe = value ?? false),
                         ),
-                        const Text('Remember me'),
+                        Text('remember_me'.tr()),
                         const Spacer(),
                         TextButton(
                           onPressed: () =>
                               context.push(AppRoutes.forgotPassword),
-                          child: const Text('Forgot password?'),
+                          child: Text('forgot_password'.tr()),
                         ),
                       ],
                     ),
                     AppSpacing.lg.gapH,
 
                     AppButton(
-                      label: 'Sign in',
+                      label: 'sign_in'.tr(),
                       isLoading: _submitting,
                       onPressed: _submit,
                     ),
@@ -183,7 +184,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         TextButton(
                           onPressed: () => context.push(AppRoutes.register),
-                          child: const Text('Create one'),
+                          child: Text('create_one'.tr()),
                         ),
                       ],
                     ),

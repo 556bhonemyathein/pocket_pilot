@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -96,13 +97,13 @@ class _TransactionFilterSheetState
         ref.watch(categoriesProvider).value ?? const <Category>[];
 
     return AppBottomSheet(
-      title: 'Filter transactions',
-      actionLabel: 'Apply filters',
+      title: 'filter_transactions'.tr(),
+      actionLabel: 'apply_filters'.tr(),
       onAction: _apply,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const _SectionLabel('Type'),
+          _SectionLabel('type'.tr()),
           Wrap(
             spacing: AppSpacing.sm,
             children: <Widget>[
@@ -121,13 +122,13 @@ class _TransactionFilterSheetState
           ),
           AppSpacing.xl.gapH,
 
-          const _SectionLabel('Date range'),
+          _SectionLabel('date_range'.tr()),
           OutlinedButton.icon(
             onPressed: _pickRange,
             icon: const Icon(Icons.calendar_today_rounded, size: 18),
             label: Text(
               _draft.from == null || _draft.to == null
-                  ? 'Any date'
+                  ? 'any_date'.tr()
                   : '${_draft.from!.formatted} → ${_draft.to!.formatted}',
             ),
           ),
@@ -138,32 +139,32 @@ class _TransactionFilterSheetState
                 onPressed: () => setState(
                   () => _draft = _draft.copyWith(from: null, to: null),
                 ),
-                child: const Text('Clear dates'),
+                child: Text('clear_dates'.tr()),
               ),
             ),
           AppSpacing.xl.gapH,
 
-          const _SectionLabel('Amount'),
+          _SectionLabel('amount'.tr()),
           Row(
             children: <Widget>[
               Expanded(
                 child: AppTextField.amount(
                   controller: _min,
-                  label: 'Min',
+                  label: 'min'.tr(),
                 ),
               ),
               AppSpacing.md.gapW,
               Expanded(
                 child: AppTextField.amount(
                   controller: _max,
-                  label: 'Max',
+                  label: 'max'.tr(),
                 ),
               ),
             ],
           ),
           AppSpacing.xl.gapH,
 
-          const _SectionLabel('Categories'),
+          _SectionLabel('categories'.tr()),
           Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
@@ -189,7 +190,7 @@ class _TransactionFilterSheetState
           AppSpacing.lg.gapH,
 
           AppButton.text(
-            label: 'Reset all',
+            label: 'reset_all'.tr(),
             onPressed: () => setState(() {
               _draft = const TransactionQuery();
               _min.clear();

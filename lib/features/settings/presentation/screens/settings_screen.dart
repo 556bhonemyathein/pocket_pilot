@@ -1,10 +1,10 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/app_routes.dart';
@@ -17,7 +17,6 @@ import '../../../../core/widgets/glass_panel.dart';
 import '../../../../shared/providers/core_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/widgets/currency_picker.dart';
-
 import '../providers/settings_providers.dart';
 
 /// App preferences: appearance, language, data, danger zone.
@@ -31,23 +30,23 @@ class SettingsScreen extends ConsumerWidget {
     final bool notifications = ref.watch(notificationsEnabledProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text('settings'.tr())),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.page),
         children: <Widget>[
-          const _SectionTitle('Appearance'),
+          _SectionTitle('appearance'.tr()),
           AppCard(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Theme', style: context.text.titleSmall),
+                Text('theme'.tr(), style: context.text.titleSmall),
                 AppSpacing.md.gapH,
                 SegmentedButton<ThemeMode>(
-                  segments: const <ButtonSegment<ThemeMode>>[
-                    ButtonSegment<ThemeMode>(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Text('Light')),
-                    ButtonSegment<ThemeMode>(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_outlined), label: Text('System')),
-                    ButtonSegment<ThemeMode>(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Text('Dark')),
+                  segments: <ButtonSegment<ThemeMode>>[
+                    ButtonSegment<ThemeMode>(value: ThemeMode.light, icon: const Icon(Icons.light_mode_outlined), label: Text('light'.tr())),
+                    ButtonSegment<ThemeMode>(value: ThemeMode.system, icon: const Icon(Icons.brightness_auto_outlined), label: Text('system'.tr())),
+                    ButtonSegment<ThemeMode>(value: ThemeMode.dark, icon: const Icon(Icons.dark_mode_outlined), label: Text('dark'.tr())),
                   ],
                   selected: <ThemeMode>{themeMode},
                   onSelectionChanged: (Set<ThemeMode> selection) => ref.read(persistedThemeModeProvider.notifier).setMode(selection.first),
@@ -57,14 +56,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
           AppSpacing.xl.gapH,
 
-          const _SectionTitle('Preferences'),
+          _SectionTitle('preferences'.tr()),
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Column(
               children: <Widget>[
                 ListTile(
                   leading: const Icon(Icons.language_rounded),
-                  title: const Text('Language'),
+                  title: Text('language'.tr()),
                   subtitle: Text(
                     kSupportedLanguages
                         .firstWhere((({String code, String label}) l) => l.code == language, orElse: () => kSupportedLanguages.first)
@@ -78,8 +77,8 @@ class SettingsScreen extends ConsumerWidget {
                 const Divider(height: 1),
                 SwitchListTile(
                   secondary: const Icon(Icons.notifications_outlined),
-                  title: const Text('Notifications'),
-                  subtitle: const Text('Budget alerts and sync updates'),
+                  title: Text('notifications'.tr()),
+                  subtitle: Text('budget_alerts_and_sync_updates'.tr()),
                   value: notifications,
                   onChanged: (bool value) => ref.read(notificationsEnabledProvider.notifier).setEnabled(enabled: value),
                 ),
@@ -88,39 +87,39 @@ class SettingsScreen extends ConsumerWidget {
           ),
           AppSpacing.xl.gapH,
 
-          const _SectionTitle('Data'),
+          _SectionTitle('data'.tr()),
           const AppCard(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Column(children: <Widget>[_BackupTile(), Divider(height: 1), _RestoreTile()]),
           ),
           AppSpacing.xl.gapH,
 
-          const _SectionTitle('About'),
+          _SectionTitle('about'.tr()),
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Column(
               children: <Widget>[
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded),
-                  title: const Text('About PocketPilot'),
+                  title: Text('about_pocketpilot'.tr()),
                   trailing: const Icon(Icons.chevron_right_rounded, size: 20),
                   onTap: () => context.pushNamed(AppRoutes.about),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
-                  title: const Text('Privacy policy'),
+                  title: Text('privacy_policy_2'.tr()),
                   trailing: const Icon(Icons.open_in_new_rounded, size: 16),
                   onTap: () async {
                     final Uri uri = Uri.parse(AppConstants.privacyPolicyUrl);
                     try {
                       final bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
                       if (!launched && context.mounted) {
-                        AppFeedback.warning(context, 'Could not open privacy policy URL');
+                        AppFeedback.warning(context, 'could_not_open_privacy_policy_url'.tr());
                       }
                     } catch (_) {
                       if (context.mounted) {
-                        AppFeedback.warning(context, 'Could not open privacy policy URL');
+                        AppFeedback.warning(context, 'could_not_open_privacy_policy_url'.tr());
                       }
                     }
                   },
@@ -130,7 +129,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           AppSpacing.xxl.gapH,
 
-          const _SectionTitle('Danger zone'),
+          _SectionTitle('danger_zone'.tr()),
           const _DeleteAccountTile(),
           AppSpacing.xxl.gapH,
         ],
@@ -142,7 +141,7 @@ class SettingsScreen extends ConsumerWidget {
     final String? picked = await AppFeedback.sheet<String>(
       context,
       child: AppBottomSheet(
-        title: 'Language',
+        title: 'language'.tr(),
         child: Column(
           children: <Widget>[
             for (final ({String code, String label}) language in kSupportedLanguages)
@@ -159,7 +158,10 @@ class SettingsScreen extends ConsumerWidget {
     if (picked != null) {
       await ref.read(languageProvider.notifier).setLanguage(picked);
       if (context.mounted) {
-        AppFeedback.info(context, 'Language updated');
+        await context.setLocale(Locale(picked));
+      }
+      if (context.mounted) {
+        AppFeedback.info(context, 'language_updated'.tr());
       }
     }
   }
@@ -192,7 +194,7 @@ class _CurrencyTile extends ConsumerWidget {
 
     return ListTile(
       leading: const Icon(Icons.payments_outlined),
-      title: const Text('Currency'),
+      title: Text('currency'.tr()),
       subtitle: Text('${current.code} · ${current.name}'),
       trailing: const Icon(Icons.chevron_right_rounded, size: 20),
       onTap: () async {
@@ -205,7 +207,7 @@ class _CurrencyTile extends ConsumerWidget {
           await ref.read(preferencesServiceProvider).setCurrencyCode(picked);
           ref.invalidate(currencyCodeProvider);
           if (context.mounted) {
-            AppFeedback.info(context, 'Currency updated to $picked');
+            AppFeedback.info(context, 'currency_updated_to_picked'.tr(namedArgs: <String, String>{'picked': picked}));
           }
         }
       },
@@ -241,8 +243,8 @@ class _BackupTileState extends ConsumerState<_BackupTile> {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.backup_outlined),
-      title: const Text('Back up data'),
-      subtitle: const Text('Export everything as a JSON file'),
+      title: Text('back_up_data'.tr()),
+      subtitle: Text('export_everything_as_a_json_file'.tr()),
       trailing: _busy
           ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
           : const Icon(Icons.chevron_right_rounded, size: 20),
@@ -265,15 +267,14 @@ class _RestoreTileState extends ConsumerState<_RestoreTile> {
     final bool? confirmed = await AppFeedback.sheet<bool>(
       context,
       child: AppBottomSheet(
-        title: 'Restore from backup',
-        actionLabel: 'Restore',
+        title: 'restore_from_backup'.tr(),
+        actionLabel: 'restore'.tr(),
         onAction: () => Navigator.of(context).pop(true),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Paste the contents of a PocketPilot backup file. Existing '
-              'transactions with the same id are overwritten.',
+              'paste_the_contents_of_a_pocketpilot_backup_file'.tr(),
               style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
             ),
             AppSpacing.lg.gapH,
@@ -290,7 +291,7 @@ class _RestoreTileState extends ConsumerState<_RestoreTile> {
 
     if (!mounted) return;
     result.when(
-      success: (int count) => AppFeedback.success(context, 'Restored $count transactions'),
+      success: (int count) => AppFeedback.success(context, 'restored_count_transactions'.tr(namedArgs: <String, String>{'count': '$count'})),
       failure: (failure) => AppFeedback.error(context, failure),
     );
   }
@@ -299,8 +300,8 @@ class _RestoreTileState extends ConsumerState<_RestoreTile> {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.restore_rounded),
-      title: const Text('Restore data'),
-      subtitle: const Text('Import from a backup file'),
+      title: Text('restore_data'.tr()),
+      subtitle: Text('import_from_a_backup_file'.tr()),
       trailing: const Icon(Icons.chevron_right_rounded, size: 20),
       onTap: _restore,
     );
@@ -316,16 +317,15 @@ class _DeleteAccountTile extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: ListTile(
         leading: Icon(Icons.delete_forever_outlined, color: context.colors.error),
-        title: Text('Delete account', style: TextStyle(color: context.colors.error)),
-        subtitle: const Text('Permanently removes your account and data'),
+        title: Text('delete_account'.tr(), style: TextStyle(color: context.colors.error)),
+        subtitle: Text('permanently_removes_your_account_and_data'.tr()),
         onTap: () async {
           final bool confirmed = await AppFeedback.confirm(
             context,
-            title: 'Delete your account?',
+            title: 'delete_your_account'.tr(),
             message:
-                'Every transaction, category and setting will be erased '
-                'from this device. This cannot be undone.',
-            confirmLabel: 'Delete everything',
+                'every_transaction_category_and_setting_will_be_e'.tr(),
+            confirmLabel: 'delete_everything'.tr(),
             isDestructive: true,
           );
           if (!confirmed) return;

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,7 @@ class AboutScreen extends ConsumerWidget {
     final config = ref.watch(appConfigProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(title: Text('about'.tr())),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.page),
         children: <Widget>[
@@ -62,19 +63,19 @@ class AboutScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Column(
               children: <Widget>[
-                const _InfoRow(label: 'Version', value: '1.0.0 (1)'),
+                _InfoRow(label: 'version'.tr(), value: '1.0.0 (1)'),
                 const Divider(height: 1),
-                _InfoRow(label: 'Build', value: config.flavor.label),
+                _InfoRow(label: 'build'.tr(), value: config.flavor.label),
                 const Divider(height: 1),
                 _InfoRow(
-                  label: 'Backend',
+                  label: 'backend'.tr(),
                   value: config.useLocalBackend
-                      ? 'On-device'
+                      ? 'on_device'.tr()
                       : config.apiBaseUrl,
                 ),
                 const Divider(height: 1),
-                const _InfoRow(
-                  label: 'Support',
+                _InfoRow(
+                  label: 'support'.tr(),
                   value: AppConstants.supportEmail,
                 ),
               ],
@@ -83,8 +84,7 @@ class AboutScreen extends ConsumerWidget {
           AppSpacing.xl.gapH,
 
           Text(
-            'Built with Flutter, Riverpod and Isar. '
-            'Your data lives on your device first.',
+            'built_with_flutter_riverpod_and_isar_your_data_l'.tr(),
             textAlign: TextAlign.center,
             style: context.text.labelSmall?.copyWith(
               color: context.colors.onSurfaceVariant,

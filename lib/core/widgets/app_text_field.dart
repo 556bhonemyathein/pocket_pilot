@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -180,7 +181,7 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget? _buildSuffix() {
     if (widget.obscureText) {
       return IconButton(
-        tooltip: _obscured ? 'Show password' : 'Hide password',
+        tooltip: _obscured ? 'show_password'.tr() : 'hide_password'.tr(),
         icon: Icon(
           _obscured
               ? Icons.visibility_outlined

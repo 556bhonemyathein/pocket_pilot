@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -36,7 +37,7 @@ class BalanceCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Text('Current balance', style: context.text.labelMedium?.copyWith(color: Colors.white.withValues(alpha: 0.75))),
+              Text('current_balance'.tr(), style: context.text.labelMedium?.copyWith(color: Colors.white.withValues(alpha: 0.75))),
               const Spacer(),
               Icon(Icons.account_balance_wallet_outlined, size: 18, color: Colors.white.withValues(alpha: 0.75)),
             ],
@@ -61,14 +62,14 @@ class BalanceCard extends StatelessWidget {
           Row(
             children: <Widget>[
               _MiniStat(
-                label: 'Income',
+                label: 'income'.tr(),
                 value: income.toCompactCurrency(currencyCode: currencyCode),
                 icon: Icons.south_west_rounded,
                 onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}', extra: TransactionType.income),
               ),
               AppSpacing.xxl.gapW,
               _MiniStat(
-                label: 'Spent',
+                label: 'spent'.tr(),
                 value: expense.toCompactCurrency(currencyCode: currencyCode),
                 icon: Icons.north_east_rounded,
                 onTap: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}', extra: TransactionType.expense),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,7 +70,7 @@ class _ForgotPasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset password')),
+      appBar: AppBar(title: Text('reset_password'.tr())),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.page),
@@ -95,7 +96,7 @@ class _ForgotPasswordScreenState
                   ),
                   AppSpacing.xl.gapH,
                   Text(
-                    'Forgot your password?',
+                    'forgot_your_password'.tr(),
                     style: context.text.headlineSmall,
                   ),
                   AppSpacing.sm.gapH,
@@ -110,7 +111,7 @@ class _ForgotPasswordScreenState
 
                   AppTextField(
                     controller: _email,
-                    label: 'Email',
+                    label: 'email'.tr(),
                     hint: 'you@example.com',
                     prefixIcon: Icons.mail_outline_rounded,
                     keyboardType: TextInputType.emailAddress,
@@ -119,12 +120,12 @@ class _ForgotPasswordScreenState
                     onSubmitted: (_) => _submit(),
                     validator: (String? value) => (value ?? '').isValidEmail
                         ? null
-                        : 'Enter a valid email address',
+                        : 'enter_a_valid_email_address'.tr(),
                   ),
                   AppSpacing.xxl.gapH,
 
                   AppButton(
-                    label: 'Send code',
+                    label: 'send_code'.tr(),
                     isLoading: _submitting,
                     onPressed: _submit,
                   ),

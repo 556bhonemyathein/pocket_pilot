@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -60,12 +61,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Profile picture', style: sheetContext.text.titleMedium),
+                    child: Text('profile_picture'.tr(), style: sheetContext.text.titleMedium),
                   ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_camera_rounded),
-                  title: const Text('Take photo'),
+                  title: Text('take_photo'.tr()),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     _pickImage(ImageSource.camera);
@@ -73,7 +74,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_rounded),
-                  title: const Text('Choose from gallery'),
+                  title: Text('choose_from_gallery'.tr()),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     _pickImage(ImageSource.gallery);
@@ -82,7 +83,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 if (hasAvatar)
                   ListTile(
                     leading: Icon(Icons.delete_outline_rounded, color: sheetContext.colors.error),
-                    title: Text('Remove photo', style: TextStyle(color: sheetContext.colors.error)),
+                    title: Text('remove_photo'.tr(), style: TextStyle(color: sheetContext.colors.error)),
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       setState(() => _avatarPath = null);
@@ -115,7 +116,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppFeedback.warning(context, 'Could not select photo: $e');
+        AppFeedback.warning(context, 'could_not_select_photo_e'.tr(namedArgs: <String, String>{'e': '$e'}));
       }
     }
   }
@@ -139,7 +140,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (failure != null) {
       AppFeedback.error(context, failure);
     } else {
-      AppFeedback.success(context, 'Profile updated');
+      AppFeedback.success(context, 'profile_updated'.tr());
       Navigator.of(context).pop();
     }
   }
@@ -147,7 +148,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit profile')),
+      appBar: AppBar(title: Text('edit_profile'.tr())),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -185,10 +186,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
               AppTextField(
                 controller: _name,
-                label: 'Full name',
+                label: 'full_name'.tr(),
                 prefixIcon: Icons.person_outline_rounded,
                 onChanged: (_) => setState(() {}),
-                validator: (String? value) => (value ?? '').trim().length >= 2 ? null : 'Enter your name',
+                validator: (String? value) => (value ?? '').trim().length >= 2 ? null : 'enter_your_name'.tr(),
               ),
               AppSpacing.lg.gapH,
 
@@ -196,26 +197,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               // re-verification, so it is read-only here by design.
               AppTextField(
                 controller: TextEditingController(text: _user?.email ?? ''),
-                label: 'Email',
+                label: 'email'.tr(),
                 prefixIcon: Icons.mail_outline_rounded,
                 enabled: false,
               ),
               AppSpacing.lg.gapH,
 
-              Text('Currency', style: context.text.labelMedium),
+              Text('currency'.tr(), style: context.text.labelMedium),
               AppSpacing.sm.gapH,
               CurrencyPickerField(selected: _currency, onSelected: (String code) => setState(() => _currency = code)),
               AppSpacing.lg.gapH,
 
               AppTextField.amount(
                 controller: _budget,
-                label: 'Monthly budget (optional)',
-                hint: 'Leave empty to hide the budget card',
+                label: 'monthly_budget_optional'.tr(),
+                hint: 'leave_empty_to_hide_the_budget_card'.tr(),
                 prefixText: _currency,
               ),
               AppSpacing.xxxl.gapH,
 
-              AppButton(label: 'Save changes', icon: Icons.check_rounded, isLoading: _submitting, onPressed: _submit),
+              AppButton(label: 'save_changes'.tr(), icon: Icons.check_rounded, isLoading: _submitting, onPressed: _submit),
             ],
           ),
         ),

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,7 +60,7 @@ class _ChangePasswordScreenState
     });
 
     if (failure == null) {
-      AppFeedback.success(context, 'Password changed');
+      AppFeedback.success(context, 'password_changed'.tr());
       Navigator.of(context).pop();
     } else if (failure is! ValidationFailure) {
       AppFeedback.error(context, failure);
@@ -69,7 +70,7 @@ class _ChangePasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Change password')),
+      appBar: AppBar(title: Text('change_password'.tr())),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -78,7 +79,7 @@ class _ChangePasswordScreenState
             children: <Widget>[
               AppTextField(
                 controller: _current,
-                label: 'Current password',
+                label: 'current_password'.tr(),
                 prefixIcon: Icons.lock_outline_rounded,
                 obscureText: true,
                 autofocus: true,
@@ -86,13 +87,13 @@ class _ChangePasswordScreenState
                 errorText: _fieldErrors['currentPassword']?.firstOrNull,
                 validator: (String? value) => (value ?? '').isNotEmpty
                     ? null
-                    : 'Enter your current password',
+                    : 'enter_your_current_password'.tr(),
               ),
               AppSpacing.lg.gapH,
 
               AppTextField(
                 controller: _next,
-                label: 'New password',
+                label: 'new_password'.tr(),
                 prefixIcon: Icons.lock_reset_rounded,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
@@ -100,10 +101,10 @@ class _ChangePasswordScreenState
                 validator: (String? value) {
                   final String password = value ?? '';
                   if (!password.isStrongPassword) {
-                    return 'Use 8+ characters with a letter and a number';
+                    return 'use_8_characters_with_a_letter_and_a_number'.tr();
                   }
                   if (password == _current.text) {
-                    return 'Choose a password you have not used before';
+                    return 'choose_a_password_you_have_not_used_before'.tr();
                   }
                   return null;
                 },
@@ -112,18 +113,18 @@ class _ChangePasswordScreenState
 
               AppTextField(
                 controller: _confirm,
-                label: 'Confirm new password',
+                label: 'confirm_new_password'.tr(),
                 prefixIcon: Icons.check_circle_outline_rounded,
                 obscureText: true,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _submit(),
                 validator: (String? value) =>
-                    value == _next.text ? null : 'Passwords do not match',
+                    value == _next.text ? null : 'passwords_do_not_match'.tr(),
               ),
               AppSpacing.xxxl.gapH,
 
               AppButton(
-                label: 'Update password',
+                label: 'update_password'.tr(),
                 isLoading: _submitting,
                 onPressed: _submit,
               ),

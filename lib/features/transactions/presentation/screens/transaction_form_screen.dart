@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,7 +131,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (_categoryId == null) {
       setState(
         () => _fieldErrors = <String, List<String>>{
-          'category': <String>['Choose a category'],
+          'category': <String>['choose_a_category'.tr()],
         },
       );
       return;
@@ -180,7 +181,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     });
 
     if (failure == null) {
-      AppFeedback.success(context, _isEditing ? 'Transaction updated' : 'Transaction saved');
+      AppFeedback.success(context, _isEditing ? 'transaction_updated'.tr() : 'transaction_saved'.tr());
       Navigator.of(context).pop();
     } else if (failure is! ValidationFailure) {
       AppFeedback.error(context, failure);
@@ -190,9 +191,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   Future<void> _delete() async {
     final bool confirmed = await AppFeedback.confirm(
       context,
-      title: 'Delete transaction?',
-      message: 'This cannot be undone once the change syncs.',
-      confirmLabel: 'Delete',
+      title: 'delete_transaction'.tr(),
+      message: 'this_cannot_be_undone_once_the_change_syncs'.tr(),
+      confirmLabel: 'delete'.tr(),
       isDestructive: true,
     );
     if (!confirmed || !mounted) return;
@@ -203,7 +204,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (failure != null) {
       AppFeedback.error(context, failure);
     } else {
-      AppFeedback.success(context, 'Transaction deleted');
+      AppFeedback.success(context, 'transaction_deleted'.tr());
       Navigator.of(context).pop();
     }
   }
@@ -215,8 +216,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit transaction' : 'New transaction'),
-        actions: <Widget>[if (_isEditing) IconButton(tooltip: 'Delete', onPressed: _delete, icon: const Icon(Icons.delete_outline_rounded))],
+        title: Text(_isEditing ? 'edit_transaction'.tr() : 'new_transaction'.tr()),
+        actions: <Widget>[if (_isEditing) IconButton(tooltip: 'delete'.tr(), onPressed: _delete, icon: const Icon(Icons.delete_outline_rounded))],
       ),
       body: SafeArea(
         child: Form(
@@ -231,7 +232,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               AppCard(
                 child: Column(
                   children: <Widget>[
-                    Text('Amount', style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant)),
+                    Text('amount'.tr(), style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant)),
                     AppSpacing.sm.gapH,
                     AppTextField.amount(
                       controller: _amount,
@@ -245,7 +246,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               AppSpacing.xl.gapH,
 
               // ── Category ──────────────────────────────────────────────────
-              Text('Category', style: context.text.labelMedium),
+              Text('category'.tr(), style: context.text.labelMedium),
               AppSpacing.sm.gapH,
               _CategoryPicker(
                 categories: categories,
@@ -262,18 +263,18 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               AppSpacing.xl.gapH,
 
               // ── Date ──────────────────────────────────────────────────────
-              _FormRow(icon: Icons.calendar_today_rounded, label: 'Date', value: _date.formattedWithTime, onTap: _pickDate),
+              _FormRow(icon: Icons.calendar_today_rounded, label: 'date'.tr(), value: _date.formattedWithTime, onTap: _pickDate),
               const Divider(height: AppSpacing.xxl),
 
               // ── Recurrence ────────────────────────────────────────────────
               _FormRow(
                 icon: Icons.repeat_rounded,
-                label: 'Repeats',
+                label: 'repeats'.tr(),
                 value: _recurrence.label,
                 onTap: () => AppFeedback.sheet<void>(
                   context,
                   child: AppBottomSheet(
-                    title: 'Repeat',
+                    title: 'repeat'.tr(),
                     // RadioGroup replaces the per-tile groupValue/onChanged
                     // pair deprecated in Flutter 3.32.
                     child: RadioGroup<RecurrenceRule>(
@@ -303,8 +304,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                         child: AppTextField(
                           controller: _transferTo,
-                          label: 'Transfer to',
-                          hint: 'Savings account',
+                          label: 'transfer_to'.tr(),
+                          hint: 'savings_account'.tr(),
                           prefixIcon: Icons.swap_horiz_rounded,
                           errorText: _fieldErrors['transferTo']?.firstOrNull,
                         ),
@@ -315,8 +316,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               // ── Note ──────────────────────────────────────────────────────
               AppTextField(
                 controller: _note,
-                label: 'Note',
-                hint: 'What was this for?',
+                label: 'note'.tr(),
+                hint: 'what_was_this_for'.tr(),
                 prefixIcon: Icons.notes_rounded,
                 maxLines: 3,
                 maxLength: 200,
@@ -324,7 +325,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               AppSpacing.xl.gapH,
 
               // ── Tags ──────────────────────────────────────────────────────
-              Text('Tags', style: context.text.labelMedium),
+              Text('tags'.tr(), style: context.text.labelMedium),
               AppSpacing.sm.gapH,
               Wrap(
                 spacing: AppSpacing.sm,
@@ -337,7 +338,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               AppSpacing.sm.gapH,
               AppTextField(
                 controller: _tag,
-                hint: 'Add a tag and press enter',
+                hint: 'add_a_tag_and_press_enter'.tr(),
                 prefixIcon: Icons.label_outline_rounded,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _addTag(),
@@ -350,7 +351,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               AppSpacing.xxxl.gapH,
 
               AppButton(
-                label: _isEditing ? 'Save changes' : 'Add transaction',
+                label: _isEditing ? 'save_changes'.tr() : 'add_transaction'.tr(),
                 icon: Icons.check_rounded,
                 isLoading: _submitting,
                 onPressed: _submit,
@@ -426,7 +427,7 @@ class _CategoryPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     if (categories.isEmpty) {
       return Text(
-        'No categories for this type yet — add one in Profile → Categories.',
+        'no_categories_for_this_type_yet_add_one_in_profi'.tr(),
         style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
       );
     }
@@ -511,10 +512,10 @@ class _ReceiptField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('Receipt', style: context.text.labelMedium),
+        Text('receipt'.tr(), style: context.text.labelMedium),
         AppSpacing.sm.gapH,
         if (path == null)
-          OutlinedButton.icon(onPressed: onPick, icon: const Icon(Icons.attach_file_rounded, size: 18), label: const Text('Attach a photo'))
+          OutlinedButton.icon(onPressed: onPick, icon: const Icon(Icons.attach_file_rounded, size: 18), label: Text('attach_a_photo'.tr()))
         else
           AppCard(
             padding: const EdgeInsets.all(AppSpacing.md),

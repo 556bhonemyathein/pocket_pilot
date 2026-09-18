@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,7 +83,7 @@ class _TransactionSearchScreenState extends ConsumerState<TransactionSearchScree
               ref.read(transactionQueryProvider.notifier).searchNow(val);
             },
             decoration: InputDecoration(
-              hintText: 'Search notes, categories, amounts, tags…',
+              hintText: 'search_notes_categories_amounts_tags'.tr(),
               filled: false,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
@@ -115,10 +116,9 @@ class _TransactionSearchScreenState extends ConsumerState<TransactionSearchScree
                   data: (TransactionPage page) => page.items.isEmpty
                       ? AppEmptyState(
                           icon: Icons.search_off_rounded,
-                          title: 'No results',
+                          title: 'no_results'.tr(),
                           message:
-                              'Nothing matches "${query.search.isNotBlank ? query.search : _controller.text}". '
-                              'Try searching by category, amount, note, or tag.',
+                              'nothing_matches_search'.tr(namedArgs: <String, String>{'search': query.search.isNotBlank ? query.search : _controller.text}),
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.all(AppSpacing.page),
@@ -130,8 +130,7 @@ class _TransactionSearchScreenState extends ConsumerState<TransactionSearchScree
                               transaction: item,
                               showDate: true,
                               onTap: () => context.push(
-                                '${AppRoutes.transactions}/'
-                                '${AppRoutes.transactionForm}',
+                                '${AppRoutes.transactions}/${AppRoutes.transactionForm}',
                                 extra: item,
                               ),
                             ).animate(delay: (25 * index).ms).fadeIn();
@@ -156,10 +155,10 @@ class _History extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (history.isEmpty) {
-      return const AppEmptyState(
+      return AppEmptyState(
         icon: Icons.search_rounded,
-        title: 'Search your transactions',
-        message: 'Find anything by note, category, amount, tag, or transfer destination.',
+        title: 'search_your_transactions'.tr(),
+        message: 'find_anything_by_note_category_amount_tag_or_tra'.tr(),
       );
     }
 
@@ -168,14 +167,14 @@ class _History extends ConsumerWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Text('Recent searches', style: context.text.titleSmall),
+            Text('recent_searches'.tr(), style: context.text.titleSmall),
             const Spacer(),
             TextButton(
               onPressed: () async {
                 await ref.read(preferencesServiceProvider).clearSearchHistory();
                 ref.invalidate(searchHistoryProvider);
               },
-              child: const Text('Clear'),
+              child: Text('clear'.tr()),
             ),
           ],
         ),

@@ -157,15 +157,63 @@ class ReportExporter {
     );
   }
 
-  /// Writes to the temp directory: exports are transient artefacts handed
-  /// straight to the share sheet, not something to accumulate in app storage.
+  /// Where exports land: a folder the user can actually find afterwards.
+  ///
+  /// Android 11+ lets apps create files in the public Downloads folder via the
+  /// plain File API, so the report shows up in the system Files app. Desktop
+  /// uses the OS Downloads folder. iOS gets the app's Documents directory,
+  /// which is exposed in the Files app through the Info.plist sharing keys.
+  /// Anything that fails falls back to app-private storage, then temp.
+  static Future<Directory> exportDirectory() async {
+    final List<Future<Directory?> Function()> candidates = <Future<Directory?> Function()>[
+      () async {
+        if (!Platform.isAndroid) return null;
+        return Directory('/storage/emulated/0/Download/PocketPilot');
+      },
+      () async {
+        if (!Platform.isAndroid) return null;
+        final Directory? external = await getExternalStorageDirectory();
+        return external == null ? null : Directory('${external.path}/exports');
+      },
+      () async {
+        if (!(Platform.isWindows || Platform.isMacOS || Platform.isLinux)) return null;
+        final Directory? downloads = await getDownloadsDirectory();
+        return downloads == null ? null : Directory('${downloads.path}/PocketPilot');
+      },
+      () async => Directory('${(await getApplicationDocumentsDirectory()).path}/exports'),
+      () async => getTemporaryDirectory(),
+    ];
+
+    for (final Future<Directory?> Function() candidate in candidates) {
+      try {
+        final Directory? directory = await candidate();
+        if (directory == null) continue;
+        await directory.create(recursive: true);
+        // Probe write access: some paths exist but reject writes (scoped storage).
+        final File probe = File('${directory.path}/.write-test');
+        await probe.writeAsString('ok', flush: true);
+        await probe.delete();
+        return directory;
+      } catch (_) {
+        continue;
+      }
+    }
+    return getTemporaryDirectory();
+  }
+
+  /// Whether [directory] is somewhere the user can browse to themselves.
+  static bool isUserVisible(Directory directory) {
+    final String path = directory.path.replaceAll(r'\', '/');
+    return path.contains('/Download');
+  }
+
   static Future<File> _write(String name, String? contents, {List<int>? bytes}) async {
-    final Directory directory = await getTemporaryDirectory();
+    final Directory directory = await exportDirectory();
     final File file = File('${directory.path}/$name');
     if (bytes != null) {
-      await file.writeAsBytes(bytes);
+      await file.writeAsBytes(bytes, flush: true);
     } else {
-      await file.writeAsString(contents ?? '');
+      await file.writeAsString(contents ?? '', flush: true);
     }
     return file;
   }

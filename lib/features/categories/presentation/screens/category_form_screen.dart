@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -103,7 +104,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     if (failure == null) {
       AppFeedback.success(
         context,
-        _isEditing ? 'Category updated' : 'Category created',
+        _isEditing ? 'category_updated'.tr() : 'category_created'.tr(),
       );
       Navigator.of(context).pop();
     } else if (failure is! ValidationFailure) {
@@ -122,7 +123,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit category' : 'New category'),
+        title: Text(_isEditing ? 'edit_category'.tr() : 'new_category'.tr()),
       ),
       body: SafeArea(
         child: Form(
@@ -149,32 +150,32 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
               AppTextField(
                 controller: _name,
-                label: 'Name',
-                hint: 'Coffee, Rent, Side project…',
+                label: 'name'.tr(),
+                hint: 'category_name_hint'.tr(),
                 prefixIcon: Icons.label_outline_rounded,
                 errorText: _fieldErrors['name']?.firstOrNull,
                 validator: (String? value) =>
                     (value ?? '').trim().length >= 2
                     ? null
-                    : 'Give the category a name',
+                    : 'give_the_category_a_name'.tr(),
               ),
               AppSpacing.xl.gapH,
 
-              Text('Applies to', style: context.text.labelMedium),
+              Text('applies_to'.tr(), style: context.text.labelMedium),
               AppSpacing.sm.gapH,
               SegmentedButton<CategoryKind>(
-                segments: const <ButtonSegment<CategoryKind>>[
+                segments: <ButtonSegment<CategoryKind>>[
                   ButtonSegment<CategoryKind>(
                     value: CategoryKind.expense,
-                    label: Text('Expense'),
+                    label: Text('expense'.tr()),
                   ),
                   ButtonSegment<CategoryKind>(
                     value: CategoryKind.income,
-                    label: Text('Income'),
+                    label: Text('income'.tr()),
                   ),
                   ButtonSegment<CategoryKind>(
                     value: CategoryKind.both,
-                    label: Text('Both'),
+                    label: Text('both'.tr()),
                   ),
                 ],
                 selected: <CategoryKind>{_kind},
@@ -183,7 +184,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
               ),
               AppSpacing.xl.gapH,
 
-              Text('Colour', style: context.text.labelMedium),
+              Text('colour'.tr(), style: context.text.labelMedium),
               AppSpacing.md.gapH,
               _ColorPicker(
                 selected: _colorValue,
@@ -192,7 +193,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
               ),
               AppSpacing.xl.gapH,
 
-              Text('Icon', style: context.text.labelMedium),
+              Text('icon'.tr(), style: context.text.labelMedium),
               AppSpacing.md.gapH,
               _IconPicker(
                 selected: _iconCodePoint,
@@ -203,7 +204,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
               AppSpacing.xxxl.gapH,
 
               AppButton(
-                label: _isEditing ? 'Save changes' : 'Create category',
+                label: _isEditing ? 'save_changes'.tr() : 'create_category'.tr(),
                 icon: Icons.check_rounded,
                 isLoading: _submitting,
                 onPressed: _submit,

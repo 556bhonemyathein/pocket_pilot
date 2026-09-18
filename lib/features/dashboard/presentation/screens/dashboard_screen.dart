@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -64,7 +65,7 @@ class DashboardScreen extends ConsumerWidget {
                 const _AvatarButton(),
                 AppSpacing.sm.gapW,
                 Text(
-                  ref.watch(greetingTimeOfDayProvider),
+                  ref.watch(greetingTimeOfDayProvider).tr(),
                   style: context.text.titleSmall?.copyWith(
                     color: context.isDark ? Colors.white : const Color(0xFF0F172A),
                     fontWeight: FontWeight.w500,
@@ -93,7 +94,7 @@ class DashboardScreen extends ConsumerWidget {
                   data: (TransactionSummary summary) =>
                       BalanceCard(balance: summary.balance, currencyCode: currency, income: summary.income, expense: summary.expense),
                   loading: () => AppShimmer.box(height: 180, radius: AppRadius.xl),
-                  error: (Object error, _) => AppCard(child: Text('Could not load your balance: $error')),
+                  error: (Object error, _) => AppCard(child: Text('could_not_load_your_balance_error'.tr(namedArgs: <String, String>{'error': '$error'}))),
                 ),
                 AppSpacing.lg.gapH,
 
@@ -102,7 +103,7 @@ class DashboardScreen extends ConsumerWidget {
                 AppSpacing.xl.gapH,
 
                 // ── Month stats ───────────────────────────────────────────
-                Text('This month', style: context.text.titleMedium),
+                Text('this_month'.tr(), style: context.text.titleMedium),
                 AppSpacing.md.gapH,
                 month.when(
                   data: (TransactionSummary summary) => _StatRow(summary: summary, currencyCode: currency),
@@ -277,18 +278,17 @@ class _CapsuleSearchBarState extends ConsumerState<_CapsuleSearchBar> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Exactly ONE icon/image in the search box — the belonging category artwork
-                    AnimatedSwitcher(
-                      duration: 300.ms,
-                      child: SizedBox(
-                        key: ValueKey<String>('art_${currentCategory.id}'),
-                        width: 30,
-                        height: 30,
-                        child: CustomPaint(
-                          painter: _CategoryArtworkPainter(category: currentCategory, isDark: isDark),
-                        ),
+                    // Exactly ONE icon in the search box. No AnimatedSwitcher here on
+                    // purpose: its cross-fade keeps the outgoing artwork on screen under
+                    // the incoming one, which reads as two stacked icons.
+                    SizedBox(
+                      key: ValueKey<String>('art_${currentCategory.id}'),
+                      width: 30,
+                      height: 30,
+                      child: CustomPaint(
+                        painter: _CategoryArtworkPainter(category: currentCategory, isDark: isDark),
                       ),
-                    ),
+                    ).animate().fadeIn(duration: 250.ms).scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), duration: 250.ms, curve: Curves.easeOutBack),
                   ],
                 ),
               ),
@@ -644,9 +644,9 @@ class _QuickActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<({String label, IconData icon, Color color, TransactionType type})> actions =
         <({String label, IconData icon, Color color, TransactionType type})>[
-          (label: 'Income', icon: Icons.south_west_rounded, color: context.finance.income, type: TransactionType.income),
-          (label: 'Expense', icon: Icons.north_east_rounded, color: context.finance.expense, type: TransactionType.expense),
-          (label: 'Transfer', icon: Icons.swap_horiz_rounded, color: context.finance.transfer, type: TransactionType.transfer),
+          (label: 'income'.tr(), icon: Icons.south_west_rounded, color: context.finance.income, type: TransactionType.income),
+          (label: 'expense'.tr(), icon: Icons.north_east_rounded, color: context.finance.expense, type: TransactionType.expense),
+          (label: 'transfer'.tr(), icon: Icons.swap_horiz_rounded, color: context.finance.transfer, type: TransactionType.transfer),
         ];
 
     return Row(
@@ -691,7 +691,7 @@ class _StatRow extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: StatCard(
-              label: 'Income',
+              label: 'income'.tr(),
               amount: summary.income,
               currencyCode: currencyCode,
               color: context.finance.income,
@@ -702,7 +702,7 @@ class _StatRow extends StatelessWidget {
           AppSpacing.md.gapW,
           Expanded(
             child: StatCard(
-              label: 'Expenses',
+              label: 'expenses'.tr(),
               amount: summary.expense,
               currencyCode: currencyCode,
               color: context.finance.expense,
@@ -713,7 +713,7 @@ class _StatRow extends StatelessWidget {
           AppSpacing.md.gapW,
           Expanded(
             child: StatCard(
-              label: 'Saved',
+              label: 'saved'.tr(),
               amount: summary.balance,
               currencyCode: currencyCode,
               color: context.finance.savings,
@@ -741,18 +741,18 @@ class _WeeklyChartSection extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Text('Last 7 days', style: context.text.titleSmall),
+              Text('last_7_days'.tr(), style: context.text.titleSmall),
               const Spacer(),
-              _LegendDot(color: context.finance.income, label: 'In'),
+              _LegendDot(color: context.finance.income, label: 'in'.tr()),
               AppSpacing.md.gapW,
-              _LegendDot(color: context.finance.expense, label: 'Out'),
+              _LegendDot(color: context.finance.expense, label: 'out'.tr()),
             ],
           ),
           AppSpacing.lg.gapH,
           series.when(
             data: (List<SeriesPoint> points) => IncomeExpenseBarChart(points: points, currencyCode: currency),
             loading: () => AppShimmer.box(height: 220),
-            error: (Object error, _) => SizedBox(height: 220, child: Center(child: Text('Chart unavailable: $error'))),
+            error: (Object error, _) => SizedBox(height: 220, child: Center(child: Text('chart_unavailable_error'.tr(namedArgs: <String, String>{'error': '$error'})))),
           ),
         ],
       ),
@@ -798,7 +798,7 @@ class _CategorySection extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('Where it went', style: context.text.titleSmall),
+              Text('where_it_went'.tr(), style: context.text.titleSmall),
               AppSpacing.lg.gapH,
               CategoryDonutChart(slices: data, currencyCode: currency),
             ],
@@ -823,9 +823,9 @@ class _RecentSection extends ConsumerWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Text('Recent activity', style: context.text.titleMedium),
+            Text('recent_activity'.tr(), style: context.text.titleMedium),
             const Spacer(),
-            TextButton(onPressed: () => context.go(AppRoutes.transactions), child: const Text('See all')),
+            TextButton(onPressed: () => context.go(AppRoutes.transactions), child: Text('see_all'.tr())),
           ],
         ),
         AppSpacing.sm.gapH,
@@ -835,9 +835,9 @@ class _RecentSection extends ConsumerWidget {
               return AppCard(
                 child: AppEmptyState(
                   icon: Icons.receipt_long_outlined,
-                  title: 'No transactions yet',
-                  message: 'Tap Add to record your first one.',
-                  actionLabel: 'Add transaction',
+                  title: 'no_transactions_yet'.tr(),
+                  message: 'tap_add_to_record_your_first_one'.tr(),
+                  actionLabel: 'add_transaction'.tr(),
                   onAction: () => context.go('${AppRoutes.dashboard}/${AppRoutes.transactionForm}'),
                 ),
               );

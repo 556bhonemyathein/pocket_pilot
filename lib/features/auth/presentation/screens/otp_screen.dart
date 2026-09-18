@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -105,7 +106,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   Future<void> _submit() async {
     if (_code.length != 6) {
-      setState(() => _error = 'Enter all six digits');
+      setState(() => _error = 'enter_all_six_digits'.tr());
       return;
     }
     context.unfocus();
@@ -147,13 +148,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         result.devCode != null) {
       _fill(result.devCode!);
     }
-    if (mounted) AppFeedback.info(context, 'A new code is on its way');
+    if (mounted) AppFeedback.info(context, 'a_new_code_is_on_its_way'.tr());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify code')),
+      appBar: AppBar(title: Text('verify_code'.tr())),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.page),
@@ -162,11 +163,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Check your inbox', style: context.text.headlineSmall),
+                Text('check_your_inbox'.tr(), style: context.text.headlineSmall),
                 AppSpacing.sm.gapH,
                 Text.rich(
                   TextSpan(
-                    text: 'We sent a six-digit code to ',
+                    text: 'we_sent_a_six_digit_code_to'.tr(),
                     style: context.text.bodyMedium?.copyWith(
                       color: context.colors.onSurfaceVariant,
                     ),
@@ -208,7 +209,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 AppSpacing.xxl.gapH,
 
                 AppButton(
-                  label: 'Verify',
+                  label: 'verify'.tr(),
                   isLoading: _submitting,
                   onPressed: _submit,
                 ),
@@ -217,14 +218,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 Center(
                   child: _cooldown > 0
                       ? Text(
-                          'Resend code in ${_cooldown}s',
+                          'resend_code_in_cooldown_s'.tr(namedArgs: <String, String>{'_cooldown': '$_cooldown'}),
                           style: context.text.bodySmall?.copyWith(
                             color: context.colors.onSurfaceVariant,
                           ),
                         )
                       : TextButton(
                           onPressed: _resend,
-                          child: const Text('Resend code'),
+                          child: Text('resend_code'.tr()),
                         ),
                 ),
               ],

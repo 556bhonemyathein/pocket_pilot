@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,7 +65,7 @@ class _ResetPasswordScreenState
       return;
     }
 
-    AppFeedback.success(context, 'Password updated — sign in to continue');
+    AppFeedback.success(context, 'password_updated_sign_in_to_continue'.tr());
     // `go` rather than `push`: the recovery stack is finished and must not be
     // reachable with the back button.
     context.go(AppRoutes.login);
@@ -73,7 +74,7 @@ class _ResetPasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New password')),
+      appBar: AppBar(title: Text('new_password'.tr())),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.page),
@@ -85,12 +86,12 @@ class _ResetPasswordScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Choose a new password',
+                    'choose_a_new_password'.tr(),
                     style: context.text.headlineSmall,
                   ),
                   AppSpacing.sm.gapH,
                   Text(
-                    'Make it something you have not used before.',
+                    'make_it_something_you_have_not_used_before'.tr(),
                     style: context.text.bodyMedium?.copyWith(
                       color: context.colors.onSurfaceVariant,
                     ),
@@ -99,7 +100,7 @@ class _ResetPasswordScreenState
 
                   AppTextField(
                     controller: _password,
-                    label: 'New password',
+                    label: 'new_password'.tr(),
                     prefixIcon: Icons.lock_outline_rounded,
                     obscureText: true,
                     autofocus: true,
@@ -107,25 +108,25 @@ class _ResetPasswordScreenState
                     validator: (String? value) =>
                         (value ?? '').isStrongPassword
                         ? null
-                        : 'Use 8+ characters with a letter and a number',
+                        : 'use_8_characters_with_a_letter_and_a_number'.tr(),
                   ),
                   AppSpacing.lg.gapH,
 
                   AppTextField(
                     controller: _confirm,
-                    label: 'Confirm password',
+                    label: 'confirm_password'.tr(),
                     prefixIcon: Icons.lock_reset_rounded,
                     obscureText: true,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _submit(),
                     validator: (String? value) => value == _password.text
                         ? null
-                        : 'Passwords do not match',
+                        : 'passwords_do_not_match'.tr(),
                   ),
                   AppSpacing.xxl.gapH,
 
                   AppButton(
-                    label: 'Update password',
+                    label: 'update_password'.tr(),
                     isLoading: _submitting,
                     onPressed: _submit,
                   ),

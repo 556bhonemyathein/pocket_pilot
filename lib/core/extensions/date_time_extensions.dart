@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Date helpers used by reports, filters and transaction grouping.
 extension DateTimeX on DateTime {
@@ -21,8 +21,8 @@ extension DateTimeX on DateTime {
 
   /// Human label used in transaction list section headers.
   String get relativeLabel {
-    if (isToday) return 'Today';
-    if (isYesterday) return 'Yesterday';
+    if (isToday) return 'today'.tr();
+    if (isYesterday) return 'yesterday'.tr();
     if (isSameYear(DateTime.now())) return DateFormat('d MMM').format(this);
     return formatted;
   }

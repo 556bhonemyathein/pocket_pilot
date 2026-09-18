@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
@@ -51,7 +52,7 @@ abstract final class AppFeedback {
       SnackBar(
         duration: AppConstants.undoWindow,
         content: Text(message),
-        action: SnackBarAction(label: 'Undo', onPressed: onUndo),
+        action: SnackBarAction(label: 'undo'.tr(), onPressed: onUndo),
       ),
     );
   }
@@ -87,8 +88,8 @@ abstract final class AppFeedback {
     BuildContext context, {
     required String title,
     required String message,
-    String confirmLabel = 'Confirm',
-    String cancelLabel = 'Cancel',
+    String? confirmLabel,
+    String? cancelLabel,
     bool isDestructive = false,
   }) async {
     final bool? result = await showDialog<bool>(
@@ -105,7 +106,7 @@ abstract final class AppFeedback {
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(cancelLabel),
+            child: Text(cancelLabel ?? 'cancel'.tr()),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -115,7 +116,7 @@ abstract final class AppFeedback {
                     foregroundColor: dialogContext.colors.onError,
                   )
                 : null,
-            child: Text(confirmLabel),
+            child: Text(confirmLabel ?? 'confirm'.tr()),
           ),
         ],
       ),

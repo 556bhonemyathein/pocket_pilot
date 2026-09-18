@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,27 +26,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   /// benefit and would survive navigation, which is not what we want.
   int _page = 0;
 
-  static const List<_Slide> _slides = <_Slide>[
+  static List<_Slide> get _slides => <_Slide>[
     _Slide(
       icon: Icons.account_balance_wallet_outlined,
-      title: 'Every penny, accounted for',
+      title: 'every_penny_accounted_for'.tr(),
       body:
-          'Log income, expenses and transfers in seconds. '
-          'PocketPilot keeps the running balance so you never guess.',
+          'log_income_expenses_and_transfers_in_seconds_poc'.tr(),
     ),
     _Slide(
       icon: Icons.insights_rounded,
-      title: 'See where it actually goes',
+      title: 'see_where_it_actually_goes'.tr(),
       body:
-          'Weekly, monthly and yearly reports turn a list of transactions '
-          'into a picture you can act on.',
+          'weekly_monthly_and_yearly_reports_turn_a_list_of'.tr(),
     ),
     _Slide(
       icon: Icons.cloud_off_rounded,
-      title: 'Works without a signal',
+      title: 'works_without_a_signal'.tr(),
       body:
-          'Everything is saved on your device first and synced when '
-          "you're back online. No spinners on the underground.",
+          'everything_is_saved_on_your_device_first_and_syn'.tr(),
     ),
   ];
 
@@ -74,7 +72,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: _finish,
-                child: const Text('Skip'),
+                child: Text('skip'.tr()),
               ),
             ),
             Expanded(
@@ -109,7 +107,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               child: AppButton(
-                label: isLast ? 'Get started' : 'Next',
+                label: isLast ? 'get_started'.tr() : 'next'.tr(),
                 onPressed: isLast
                     ? _finish
                     : () => _controller.nextPage(

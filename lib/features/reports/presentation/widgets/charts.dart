@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -212,7 +213,7 @@ class IncomeExpenseBarChart extends StatelessWidget {
                     final int idx = group.x.toInt();
                     final String dayLabel = (idx >= 0 && idx < points.length) ? points[idx].label : '';
                     final bool isIncome = rodIndex == 0;
-                    final String type = isIncome ? 'Income' : 'Expense';
+                    final String type = isIncome ? 'income'.tr() : 'expense'.tr();
                     final String formattedVal = rod.toY.toCurrency(currencyCode: currencyCode);
 
                     return BarTooltipItem(
@@ -479,7 +480,7 @@ class _DonutCentre extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasSelection = touched >= 0 && touched < slices.length;
-    final String label = hasSelection ? slices[touched].label : 'Total';
+    final String label = hasSelection ? slices[touched].label : 'total'.tr();
     final double value = hasSelection ? slices[touched].value : total;
 
     return Column(

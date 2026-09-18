@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/date_time_extensions.dart';
@@ -72,20 +73,23 @@ final greetingProvider = Provider<String>((Ref ref) {
   final int hour = DateTime.now().hour;
   final String name = ref.watch(currentUserProvider)?.name.split(' ').first ?? '';
   final String part = switch (hour) {
-    < 12 => 'Good morning',
-    < 18 => 'Good afternoon',
-    _ => 'Good evening',
+    < 12 => 'good_morning'.tr(),
+    < 18 => 'good_afternoon'.tr(),
+    _ => 'good_evening'.tr(),
   };
   return name.isEmpty ? part : '$part, $name';
 }, name: 'greeting');
 
 /// Capitalized time-of-day greeting for the dashboard header (e.g. 'Good Morning').
+///
+/// Exposes the translation *key* rather than the text so the widget resolves
+/// it at build time and a language change takes effect without restarting.
 final greetingTimeOfDayProvider = Provider<String>((Ref ref) {
   final int hour = DateTime.now().hour;
   return switch (hour) {
-    < 12 => 'Good Morning',
-    < 18 => 'Good Afternoon',
-    _ => 'Good Evening',
+    < 12 => 'good_morning_2',
+    < 18 => 'good_afternoon_2',
+    _ => 'good_evening_2',
   };
 }, name: 'greetingTimeOfDay');
 

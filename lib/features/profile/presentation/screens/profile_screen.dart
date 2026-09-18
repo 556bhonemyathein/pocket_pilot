@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +26,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: <Widget>[
-          const SliverAppBar(floating: true, titleSpacing: AppSpacing.page, title: Text('Profile')),
+          SliverAppBar(floating: true, titleSpacing: AppSpacing.page, title: Text('profile'.tr())),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 120),
             sliver: SliverList.list(
@@ -34,19 +35,19 @@ class ProfileScreen extends ConsumerWidget {
                 AppSpacing.xxl.gapH,
 
                 _Section(
-                  title: 'Account',
+                  title: 'account'.tr(),
                   tiles: <Widget>[
                     _Tile(
                       icon: Icons.person_outline_rounded,
-                      title: 'Edit profile',
-                      subtitle: 'Name, avatar and currency',
+                      title: 'edit_profile'.tr(),
+                      subtitle: 'name_avatar_and_currency'.tr(),
                       onTap: () => context.pushNamed(AppRoutes.editProfile),
                     ),
-                    _Tile(icon: Icons.lock_outline_rounded, title: 'Change password', onTap: () => context.pushNamed(AppRoutes.changePassword)),
+                    _Tile(icon: Icons.lock_outline_rounded, title: 'change_password'.tr(), onTap: () => context.pushNamed(AppRoutes.changePassword)),
                     _Tile(
                       icon: Icons.category_outlined,
-                      title: 'Categories',
-                      subtitle: 'Add, edit and organise',
+                      title: 'categories'.tr(),
+                      subtitle: 'add_edit_and_organise'.tr(),
                       onTap: () => context.pushNamed(AppRoutes.categories),
                     ),
                   ],
@@ -54,12 +55,12 @@ class ProfileScreen extends ConsumerWidget {
                 AppSpacing.xl.gapH,
 
                 _Section(
-                  title: 'App',
+                  title: 'app'.tr(),
                   tiles: <Widget>[
                     _Tile(
                       icon: Icons.settings_outlined,
-                      title: 'Settings',
-                      subtitle: 'Theme, language, backup',
+                      title: 'settings'.tr(),
+                      subtitle: 'theme_language_backup'.tr(),
                       onTap: () => context.pushNamed(AppRoutes.settings),
                     ),
                     _SyncTile(pending: pending),
@@ -94,7 +95,7 @@ class _ProfileHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(user?.name ?? 'Signed out', style: context.text.titleMedium, overflow: TextOverflow.ellipsis),
+                Text(user?.name ?? 'signed_out'.tr(), style: context.text.titleMedium, overflow: TextOverflow.ellipsis),
                 AppSpacing.xxs.gapH,
                 Text(
                   user?.email ?? '',
@@ -104,7 +105,7 @@ class _ProfileHeader extends StatelessWidget {
                 if (user?.createdAt != null) ...<Widget>[
                   AppSpacing.sm.gapH,
                   Text(
-                    'Member since ${user!.createdAt!.monthYear}',
+                    'member_since_monthyear'.tr(namedArgs: <String, String>{'monthYear': user!.createdAt!.monthYear}),
                     style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant),
                   ),
                 ],
@@ -191,15 +192,13 @@ class _SyncTileState extends ConsumerState<_SyncTile> {
       AppFeedback.success(
         context,
         report.pushed == 0
-            ? 'Everything is already up to date'
-            : 'Synced ${report.pushed} change'
-                  '${report.pushed == 1 ? '' : 's'}',
+            ? 'everything_is_already_up_to_date'.tr()
+            : 'synced_changes'.plural(report.pushed),
       );
     } else {
       AppFeedback.warning(
         context,
-        '${report.failed} change${report.failed == 1 ? '' : 's'} '
-        'could not sync — we will retry',
+        'changes_could_not_sync'.plural(report.failed),
       );
     }
   }
@@ -210,13 +209,12 @@ class _SyncTileState extends ConsumerState<_SyncTile> {
 
     return _Tile(
       icon: Icons.sync_rounded,
-      title: 'Sync now',
+      title: 'sync_now'.tr(),
       subtitle: widget.pending > 0
-          ? '${widget.pending} pending change'
-                '${widget.pending == 1 ? '' : 's'}'
+          ? 'pending_changes'.plural(widget.pending)
           : last == null
-          ? 'Never synced'
-          : 'Last synced ${last.formattedWithTime}',
+          ? 'never_synced'.tr()
+          : 'last_synced_formattedwithtime'.tr(namedArgs: <String, String>{'formattedWithTime': last.formattedWithTime}),
       onTap: _syncing ? () {} : _sync,
       trailing: _syncing
           ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
@@ -234,11 +232,10 @@ class _SignOutButton extends ConsumerWidget {
       onPressed: () async {
         final bool confirmed = await AppFeedback.confirm(
           context,
-          title: 'Sign out?',
+          title: 'sign_out'.tr(),
           message:
-              'Your data stays on this device and will be here when '
-              'you sign back in.',
-          confirmLabel: 'Sign out',
+              'your_data_stays_on_this_device_and_will_be_here'.tr(),
+          confirmLabel: 'sign_out_2'.tr(),
         );
         if (!confirmed) return;
 
@@ -251,7 +248,7 @@ class _SignOutButton extends ConsumerWidget {
         side: BorderSide(color: context.colors.error.withValues(alpha: 0.4)),
       ),
       icon: const Icon(Icons.logout_rounded, size: 18),
-      label: const Text('Sign out'),
+      label: Text('sign_out_2'.tr()),
     );
   }
 }

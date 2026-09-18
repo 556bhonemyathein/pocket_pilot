@@ -1,5 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,7 +12,7 @@ import 'shared/providers/sync_providers.dart';
 class PocketPilotApp extends ConsumerWidget {
   const PocketPilotApp({super.key});
 
-  static const Set<String> _supportedLocaleCodes = <String>{'en', 'es', 'fr', 'de', 'id', 'ar', 'my'};
+  static const Set<String> _supportedLocaleCodes = <String>{'en', 'my'};
 
   static String resolveLocaleCode(String? code) => _supportedLocaleCodes.contains(code) ? code! : 'en';
 
@@ -21,7 +21,6 @@ class PocketPilotApp extends ConsumerWidget {
     final config = ref.watch(appConfigProvider);
     final GoRouter router = ref.watch(routerProvider);
     final ThemeMode themeMode = ref.watch(persistedThemeModeProvider);
-    final String language = PocketPilotApp.resolveLocaleCode(ref.watch(languageProvider));
 
     ref.watch(syncCoordinatorProvider);
 
@@ -31,16 +30,11 @@ class PocketPilotApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      locale: Locale(language),
-      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: kSupportedLanguages
-          .where((({String code, String label}) item) => _supportedLocaleCodes.contains(item.code))
-          .map((({String code, String label}) item) => Locale(item.code))
-          .toList(),
+      // EasyLocalization owns the live locale; the persisted preference is
+      // pushed into it by the settings screen and on first frame in main.dart.
+      locale: context.locale,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
       localeResolutionCallback: (Locale? locale, Iterable<Locale> supported) {
         if (locale == null) return const Locale('en');
         final String resolved = resolveLocaleCode(locale.languageCode);

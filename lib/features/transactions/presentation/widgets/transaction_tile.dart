@@ -91,8 +91,7 @@ class TransactionTile extends ConsumerWidget {
                       Flexible(
                         child: Text(
                           showDate
-                              ? '${category.name} · '
-                                    '${transaction.date.relativeLabel}'
+                              ? '${category.name} · ${transaction.date.relativeLabel}'
                               : category.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

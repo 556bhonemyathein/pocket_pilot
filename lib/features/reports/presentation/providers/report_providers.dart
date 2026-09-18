@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/date_time_extensions.dart';
@@ -23,7 +24,7 @@ class ReportRange {
   final DateTime to;
 
   String get label => switch (period) {
-    ReportPeriod.weekly => 'Week of ${from.formatted}',
+    ReportPeriod.weekly => 'week_of_formatted'.tr(namedArgs: <String, String>{'formatted': from.formatted}),
     ReportPeriod.monthly => from.monthYear,
     ReportPeriod.yearly => '${from.year}',
     ReportPeriod.custom => '${from.formatted} → ${to.formatted}',

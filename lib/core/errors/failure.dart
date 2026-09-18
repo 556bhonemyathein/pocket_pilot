@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 import 'app_exception.dart';
 
 /// A *presentation-safe* error.
@@ -10,10 +12,15 @@ import 'app_exception.dart';
 /// Implements `Exception` so a repository can rethrow a failure it received
 /// from a nested call without unwrapping and re-wrapping it.
 sealed class Failure implements Exception {
-  const Failure(this.message, {this.debugMessage});
+  const Failure(this.rawMessage, {this.debugMessage});
 
-  /// User-facing, already-friendly text.
-  final String message;
+  /// Either a translation key (the built-in failures) or literal text handed
+  /// in by a caller. Kept raw so the constructors can stay `const`.
+  final String rawMessage;
+
+  /// User-facing, already-friendly text in the active locale. A literal
+  /// message that is not a key passes through unchanged.
+  String get message => rawMessage.tr();
 
   /// Technical detail: logged and reported, never rendered.
   final String? debugMessage;
@@ -30,28 +37,28 @@ sealed class Failure implements Exception {
 
 class NetworkFailure extends Failure {
   const NetworkFailure({
-    String message = 'You appear to be offline. Changes are saved on device.',
+    String message = 'failure_offline',
     super.debugMessage,
   }) : super(message);
 }
 
 class TimeoutFailure extends Failure {
   const TimeoutFailure({
-    String message = 'That took too long. Please try again.',
+    String message = 'failure_timeout',
     super.debugMessage,
   }) : super(message);
 }
 
 class ServerFailure extends Failure {
   const ServerFailure({
-    String message = 'Something went wrong on our side.',
+    String message = 'failure_server',
     super.debugMessage,
   }) : super(message);
 }
 
 class UnauthorizedFailure extends Failure {
   const UnauthorizedFailure({
-    String message = 'Your session expired. Please sign in again.',
+    String message = 'failure_unauthorized',
     super.debugMessage,
   }) : super(message);
 }
@@ -72,28 +79,28 @@ class ValidationFailure extends Failure {
 
 class NotFoundFailure extends Failure {
   const NotFoundFailure({
-    String message = 'We could not find what you were looking for.',
+    String message = 'failure_not_found',
     super.debugMessage,
   }) : super(message);
 }
 
 class CacheFailure extends Failure {
   const CacheFailure({
-    String message = 'Could not read local data.',
+    String message = 'failure_cache',
     super.debugMessage,
   }) : super(message);
 }
 
 class CancelledFailure extends Failure {
   const CancelledFailure({
-    String message = 'Request cancelled.',
+    String message = 'failure_cancelled',
     super.debugMessage,
   }) : super(message);
 }
 
 class UnknownFailure extends Failure {
   const UnknownFailure({
-    String message = 'Unexpected error. Please try again.',
+    String message = 'failure_unknown',
     super.debugMessage,
   }) : super(message);
 }

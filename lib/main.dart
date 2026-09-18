@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ Future<void> main() async {
   await runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      await EasyLocalization.ensureInitialized();
 
       final AppConfig config = AppConfig.fromEnvironment();
       AppLogger.configure(enabled: config.enableLogging);
@@ -46,7 +48,18 @@ Future<void> main() async {
 
       await _runStartupTasks(container);
 
-      runApp(UncontrolledProviderScope(container: container, child: const PocketPilotApp()));
+      final String startLanguage = PocketPilotApp.resolveLocaleCode(preferences.languageCode);
+
+      runApp(
+        EasyLocalization(
+          supportedLocales: const <Locale>[Locale('en'), Locale('my')],
+          path: 'assets/translations',
+          fallbackLocale: const Locale('en'),
+          startLocale: Locale(startLanguage),
+          useOnlyLangCode: true,
+          child: UncontrolledProviderScope(container: container, child: const PocketPilotApp()),
+        ),
+      );
     },
     (Object error, StackTrace stack) {
       AppLogger.e('Uncaught zone error', error, stack);

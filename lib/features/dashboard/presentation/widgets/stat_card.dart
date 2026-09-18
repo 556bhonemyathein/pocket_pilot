@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -113,7 +114,7 @@ class BudgetProgressCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Text('Monthly budget', style: context.text.titleSmall),
+              Text('monthly_budget'.tr(), style: context.text.titleSmall),
               const Spacer(),
               Text(
                 ratio.toPercent(),
@@ -142,10 +143,8 @@ class BudgetProgressCard extends StatelessWidget {
 
           Text(
             remaining >= 0
-                ? '${remaining.toCurrency(currencyCode: currencyCode)} left of '
-                      '${budget.toCurrency(currencyCode: currencyCode)}'
-                : '${remaining.abs().toCurrency(currencyCode: currencyCode)} '
-                      'over budget',
+                ? '${remaining.toCurrency(currencyCode: currencyCode)} left of ${budget.toCurrency(currencyCode: currencyCode)}'
+                : '${remaining.abs().toCurrency(currencyCode: currencyCode)} over budget',
             style: context.text.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),

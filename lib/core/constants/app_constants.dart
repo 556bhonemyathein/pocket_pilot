@@ -1,9 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
+
 /// App-wide, flavor-independent constants.
 ///
 /// Anything that varies per environment belongs in `AppConfig`, not here.
 abstract final class AppConstants {
   static const String appName = 'PocketPilot';
-  static const String appTagline = 'Fly through your finances.';
+  static String get appTagline => 'fly_through_your_finances'.tr();
 
   /// Default page size used by every paginated list (transactions, search…).
   static const int pageSize = 20;

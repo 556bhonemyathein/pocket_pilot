@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
@@ -219,7 +220,7 @@ class AppErrorState extends StatelessWidget {
             ),
           ),
           if (onRetry != null && failure.isRetryable)
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(onPressed: onRetry, child: Text('retry'.tr())),
         ],
       );
     }
@@ -241,7 +242,7 @@ class AppErrorState extends StatelessWidget {
             ),
             AppSpacing.xl.gapH,
             Text(
-              'Something went wrong',
+              'something_went_wrong'.tr(),
               textAlign: TextAlign.center,
               style: context.text.titleMedium,
             ),
@@ -256,7 +257,7 @@ class AppErrorState extends StatelessWidget {
             if (onRetry != null && failure.isRetryable) ...<Widget>[
               AppSpacing.xl.gapH,
               AppButton(
-                label: 'Try again',
+                label: 'try_again'.tr(),
                 icon: Icons.refresh_rounded,
                 onPressed: onRetry,
                 expanded: false,

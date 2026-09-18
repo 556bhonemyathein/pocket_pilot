@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failure.dart';
@@ -87,8 +88,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     // React to the interceptor giving up on token refresh.
     ref.listen<bool>(sessionExpiredProvider, (bool? previous, bool next) {
       if (next) {
-        state = const AsyncData<AuthState>(
-          Unauthenticated(reason: 'Your session expired. Please sign in.'),
+        state = AsyncData<AuthState>(
+          Unauthenticated(reason: 'your_session_expired_please_sign_in'.tr()),
         );
         ref.read(sessionExpiredProvider.notifier).acknowledge();
       }

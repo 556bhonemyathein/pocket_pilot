@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocket_pilot/app.dart';
@@ -7,6 +8,7 @@ import 'package:pocket_pilot/core/widgets/app_button.dart';
 import 'package:pocket_pilot/core/widgets/app_state_views.dart';
 import 'package:pocket_pilot/core/widgets/app_text_field.dart';
 import 'package:pocket_pilot/core/widgets/user_avatar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Widget tests for the shared component library.
 ///
@@ -15,15 +17,44 @@ import 'package:pocket_pilot/core/widgets/user_avatar.dart';
 /// everywhere at once. Screens are covered by the provider-level tests, which
 /// run far faster than pumping a full navigator.
 void main() {
-  Future<void> pump(WidgetTester tester, Widget child) {
-    return tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: Padding(padding: const EdgeInsets.all(16), child: child),
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    // EasyLocalization persists the chosen locale through shared_preferences.
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await EasyLocalization.ensureInitialized();
+  });
+
+  // Real translations are loaded so assertions can match the English copy
+  // users actually see, rather than raw keys.
+  Future<void> pump(WidgetTester tester, Widget child) async {
+    // runAsync lets the translation JSON actually load from disk; the fake
+    // async zone the test binding uses would otherwise never complete it.
+    await tester.runAsync(() => tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const <Locale>[Locale('en'), Locale('my')],
+        path: 'assets/translations',
+        fallbackLocale: const Locale('en'),
+        startLocale: const Locale('en'),
+        useOnlyLangCode: true,
+        saveLocale: false,
+        child: Builder(
+          builder: (BuildContext context) => MaterialApp(
+            theme: AppTheme.light(),
+            locale: context.locale,
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            home: Scaffold(
+              body: Padding(padding: const EdgeInsets.all(16), child: child),
+            ),
+          ),
         ),
       ),
-    );
+    ));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    // A bounded pump rather than pumpAndSettle: children with perpetual
+    // animations (a loading spinner) would otherwise never settle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
   }
 
   group('PocketPilotApp', () {

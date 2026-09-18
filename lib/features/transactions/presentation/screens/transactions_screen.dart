@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,7 +72,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     // snackbar is the user's escape hatch for the next few seconds.
     AppFeedback.undo(
       context,
-      message: 'Transaction deleted',
+      message: 'transaction_deleted'.tr(),
       onUndo: () async {
         final Failure? restoreFailure = await ref.read(transactionControllerProvider.notifier).restore(transaction.id);
         if (restoreFailure != null && mounted) {
@@ -97,9 +98,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               floating: true,
               snap: true,
               titleSpacing: AppSpacing.page,
-              title: const Text('Activity'),
+              title: Text('activity'.tr()),
               actions: <Widget>[
-                IconButton(tooltip: 'Search', onPressed: () => context.goNamed(AppRoutes.search), icon: const Icon(Icons.search_rounded)),
+                IconButton(tooltip: 'search'.tr(), onPressed: () => context.goNamed(AppRoutes.search), icon: const Icon(Icons.search_rounded)),
                 _SortButton(current: query.sort),
                 _FilterButton(count: query.activeFilterCount),
                 AppSpacing.sm.gapW,
@@ -141,14 +142,13 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
           hasScrollBody: false,
           child: AppEmptyState(
             icon: filtered ? Icons.filter_alt_off_outlined : Icons.receipt_long_outlined,
-            title: filtered ? 'No matches' : 'Nothing here yet',
-            message: filtered ? 'Try widening your filters or clearing the search.' : 'Add your first transaction to get started.',
-            actionLabel: filtered ? 'Clear filters' : 'Add transaction',
+            title: filtered ? 'no_matches'.tr() : 'nothing_here_yet'.tr(),
+            message: filtered ? 'try_widening_your_filters_or_clearing_the_search'.tr() : 'add_your_first_transaction_to_get_started'.tr(),
+            actionLabel: filtered ? 'clear_filters'.tr() : 'add_transaction'.tr(),
             onAction: filtered
                 ? () => ref.read(transactionQueryProvider.notifier).reset()
                 : () => context.go(
-                    '${AppRoutes.transactions}/'
-                    '${AppRoutes.transactionForm}',
+                    '${AppRoutes.transactions}/${AppRoutes.transactionForm}',
                   ),
           ),
         ),
@@ -250,7 +250,7 @@ class _SortButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<TransactionSort>(
-      tooltip: 'Sort',
+      tooltip: 'sort'.tr(),
       icon: const Icon(Icons.swap_vert_rounded),
       initialValue: current,
       onSelected: (TransactionSort sort) => ref.read(transactionQueryProvider.notifier).setSort(sort),
@@ -269,7 +269,7 @@ class _FilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Filter',
+      tooltip: 'filter'.tr(),
       onPressed: () => AppFeedback.sheet<void>(context, child: const TransactionFilterSheet()),
       icon: Badge(isLabelVisible: count > 0, label: Text('$count'), child: const Icon(Icons.tune_rounded)),
     );
@@ -285,9 +285,8 @@ class _ActiveFilterBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String label = query.search.isNotBlank
-        ? 'Search: "${query.search}" · $resultCount result${resultCount == 1 ? '' : 's'}'
-        : '$resultCount result${resultCount == 1 ? '' : 's'}';
+    final String results = 'results_count'.plural(resultCount);
+    final String label = query.search.isNotBlank ? 'search_results_label'.tr(namedArgs: <String, String>{'search': query.search, 'results': results}) : results;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
@@ -307,7 +306,7 @@ class _ActiveFilterBar extends ConsumerWidget {
               ref.read(transactionQueryProvider.notifier).searchNow('');
             },
             icon: const Icon(Icons.close_rounded, size: 16),
-            label: const Text('Clear all'),
+            label: Text('clear_all'.tr()),
           ),
         ],
       ),

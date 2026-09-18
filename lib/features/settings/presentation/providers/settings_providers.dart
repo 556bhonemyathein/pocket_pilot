@@ -47,12 +47,7 @@ final languageProvider = NotifierProvider<LanguageNotifier, String>(LanguageNoti
 /// Languages the app ships translations for.
 const List<({String code, String label})> kSupportedLanguages = <({String code, String label})>[
   (code: 'en', label: 'English'),
-  (code: 'es', label: 'Español'),
-  (code: 'fr', label: 'Français'),
-  (code: 'de', label: 'Deutsch'),
-  (code: 'id', label: 'Bahasa Indonesia'),
-  (code: 'ar', label: 'العربية'),
-  (code: 'my', label: 'မြန်မာ (Myanmar)'),
+  (code: 'my', label: 'မြန်မာ'),
 ];
 
 /// Notification preference.

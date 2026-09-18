@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle, ByteData;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/errors/failure.dart';
 import '../../../../core/extensions/extensions.dart';
 import '../../../../core/theme/app_dimens.dart';
 import '../../../../core/utils/result.dart';
@@ -17,6 +20,7 @@ import '../../../../core/widgets/glass_panel.dart';
 import '../../../../shared/models/category.dart';
 import '../../../../shared/models/enums.dart';
 import '../../../../shared/models/transaction.dart';
+import '../../../../shared/models/transaction_query.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../categories/presentation/providers/category_providers.dart';
 import '../../../transactions/domain/transaction_repository.dart';
@@ -42,9 +46,9 @@ class ReportsScreen extends ConsumerWidget {
           SliverAppBar(
             floating: true,
             titleSpacing: AppSpacing.page,
-            title: const Text('Reports'),
+            title: Text('reports'.tr()),
             actions: <Widget>[
-              IconButton(tooltip: 'Export', onPressed: () => _openExportSheet(context, ref), icon: const Icon(Icons.ios_share_rounded)),
+              IconButton(tooltip: 'export'.tr(), onPressed: () => _openExportSheet(context, ref), icon: const Icon(Icons.ios_share_rounded)),
               AppSpacing.sm.gapW,
             ],
           ),
@@ -84,7 +88,7 @@ class ReportsScreen extends ConsumerWidget {
     await AppFeedback.sheet<void>(
       context,
       child: AppBottomSheet(
-        title: 'Export report',
+        title: 'export_report'.tr(),
         child: Column(
           children: <Widget>[
             ListTile(
@@ -93,10 +97,10 @@ class ReportsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(AppRadius.sm)),
                 child: const Icon(Icons.table_chart_outlined, color: Colors.green),
               ),
-              title: const Text('CSV spreadsheet'),
-              subtitle: const Text('Open in Excel, Numbers or Sheets'),
+              title: Text('csv_spreadsheet'.tr()),
+              subtitle: Text('open_in_excel_numbers_or_sheets'.tr()),
               trailing: IconButton(
-                tooltip: 'Share CSV',
+                tooltip: 'share_csv'.tr(),
                 icon: const Icon(Icons.share_outlined, size: 20),
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -115,10 +119,10 @@ class ReportsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(AppRadius.sm)),
                 child: const Icon(Icons.picture_as_pdf_outlined, color: Colors.redAccent),
               ),
-              title: const Text('PDF summary'),
-              subtitle: const Text('Formatted totals and full ledger'),
+              title: Text('pdf_summary'.tr()),
+              subtitle: Text('formatted_totals_and_full_ledger'.tr()),
               trailing: IconButton(
-                tooltip: 'Share PDF',
+                tooltip: 'share_pdf'.tr(),
                 icon: const Icon(Icons.share_outlined, size: 20),
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -136,77 +140,157 @@ class ReportsScreen extends ConsumerWidget {
     );
   }
 
-  /// Generates the file and opens it directly in a viewer or shares it.
+  /// Generates the file, saves it where the user can find it, then opens or shares it.
+  ///
+  /// Every step is guarded: a failed font load, a rejected write path or a
+  /// missing viewer app must surface as a message, never as a silent stall
+  /// behind a "Preparing..." toast.
   Future<void> _export(BuildContext context, WidgetRef ref, {required bool asPdf, bool shareDirectly = false}) async {
+    final String kind = asPdf ? 'pdf_summary'.tr() : 'csv_spreadsheet'.tr();
     final ReportRange range = ref.read(reportRangeProvider);
     final String currency = ref.read(currencyCodeProvider);
     final Map<String, Category> categories = ref.read(categoryLookupProvider);
 
-    AppFeedback.info(context, 'Preparing ${asPdf ? 'PDF summary' : 'CSV spreadsheet'}...');
+    final NavigatorState navigator = Navigator.of(context, rootNavigator: true);
+    bool dialogOpen = true;
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (BuildContext _) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Row(
+              children: <Widget>[
+                const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5)),
+                AppSpacing.md.gapW,
+                Expanded(child: Text('generating_kind'.tr(namedArgs: <String, String>{'kind': kind}))),
+              ],
+            ),
+          ),
+        ),
+      ).whenComplete(() => dialogOpen = false),
+    );
+    void closeDialog() {
+      if (dialogOpen && navigator.mounted) {
+        navigator.pop();
+        dialogOpen = false;
+      }
+    }
 
-    final List<Transaction> rangeTransactions = await ref.read(reportTransactionsProvider.future);
-    List<Transaction> transactions = rangeTransactions;
+    Result<File> result;
     String subtitle = range.label;
-
-    if (transactions.isEmpty) {
-      final List<Transaction> all = (await ref.read(transactionRepositoryProvider).exportAll()).dataOrNull ?? const <Transaction>[];
-      if (all.isNotEmpty) {
-        transactions = all;
-        subtitle = 'All transactions (${range.label} had no activity)';
+    try {
+      debugPrint('[export] start kind=$kind range=${range.label}');
+      // Query the repository directly rather than `reportTransactionsProvider.future`:
+      // that provider chains through a StreamProvider whose `.future` never
+      // resolves when nothing is listening, which left the dialog spinning forever.
+      final TransactionRepository repository = ref.read(transactionRepositoryProvider);
+      final Result<TransactionPage> page = await repository.getPage(TransactionQuery(from: range.from, to: range.to, pageSize: 1 << 30));
+      List<Transaction> transactions = page.dataOrNull?.items ?? const <Transaction>[];
+      debugPrint('[export] rows=${transactions.length}');
+      if (transactions.isEmpty) {
+        final List<Transaction> all = (await repository.exportAll()).dataOrNull ?? const <Transaction>[];
+        if (all.isNotEmpty) {
+          transactions = all;
+          subtitle = 'all_transactions_label_had_no_activity'.tr(namedArgs: <String, String>{'label': range.label});
+        }
       }
-    }
 
-    pw.Font? regularFont;
-    pw.Font? boldFont;
-    if (asPdf) {
-      try {
-        final ByteData regData = await rootBundle.load('assets/fonts/PlusJakartaSans-Regular.ttf');
-        regularFont = pw.Font.ttf(regData);
-        final ByteData boldData = await rootBundle.load('assets/fonts/PlusJakartaSans-Bold.ttf');
-        boldFont = pw.Font.ttf(boldData);
-      } catch (_) {
-        // Fall back to default fonts if assets are unavailable
+      if (transactions.isEmpty) {
+        closeDialog();
+        if (context.mounted) AppFeedback.warning(context, 'nothing_to_export_yet_add_a_transaction_first'.tr());
+        return;
       }
+
+      pw.Font? regularFont;
+      pw.Font? boldFont;
+      if (asPdf) {
+        try {
+          regularFont = pw.Font.ttf(await rootBundle.load('assets/fonts/PlusJakartaSans-Regular.ttf'));
+          boldFont = pw.Font.ttf(await rootBundle.load('assets/fonts/PlusJakartaSans-Bold.ttf'));
+        } catch (_) {
+          // Built-in Helvetica is fine; the report just loses the brand font.
+        }
+      }
+
+      const ReportExporter exporter = ReportExporter();
+      final String stamp = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
+      final String fileName = 'pocketpilot-${range.from.isoDate}-to-${range.to.isoDate}-$stamp';
+
+      debugPrint('[export] writing $fileName');
+      result = asPdf
+          ? await exporter.toPdf(
+              transactions: transactions,
+              categories: categories,
+              title: 'PocketPilot report',
+              subtitle: subtitle,
+              currencyCode: currency,
+              fileName: fileName,
+              regularFont: regularFont,
+              boldFont: boldFont,
+            )
+          : await exporter.toCsv(transactions: transactions, categories: categories, fileName: fileName);
+      debugPrint('[export] result=$result');
+    } catch (error, stackTrace) {
+      debugPrint('[export] threw $error $stackTrace');
+      result = FailureResult<File>(FailureMapper.from(error, stackTrace));
+    } finally {
+      closeDialog();
     }
-
-    const ReportExporter exporter = ReportExporter();
-    final String fileName = 'pocketpilot-${range.from.isoDate}-to-${range.to.isoDate}';
-
-    final Result<File> result = asPdf
-        ? await exporter.toPdf(
-            transactions: transactions,
-            categories: categories,
-            title: 'PocketPilot report',
-            subtitle: subtitle,
-            currencyCode: currency,
-            fileName: fileName,
-            regularFont: regularFont,
-            boldFont: boldFont,
-          )
-        : await exporter.toCsv(transactions: transactions, categories: categories, fileName: fileName);
 
     if (!context.mounted) return;
     await result.when(
-      success: (File file) async {
-        if (shareDirectly) {
-          await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)], text: 'PocketPilot report - $subtitle'));
-          return;
-        }
-
-        // Open directly with the device's default application
-        final OpenResult openResult = await OpenFilex.open(file.path, type: asPdf ? 'application/pdf' : 'text/csv');
-
-        if (!context.mounted) return;
-
-        if (openResult.type == ResultType.done) {
-          AppFeedback.success(context, 'Opened ${asPdf ? 'PDF summary' : 'CSV spreadsheet'}');
-        } else {
-          // If no viewer is installed or permission needed, summon share sheet
-          await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)], text: 'PocketPilot report - $subtitle'));
-        }
-      },
-      failure: (failure) async => AppFeedback.error(context, failure),
+      success: (File file) => _deliver(context, file, asPdf: asPdf, subtitle: subtitle, shareDirectly: shareDirectly),
+      failure: (Failure failure) async => AppFeedback.error(context, failure),
     );
+  }
+
+  /// Hands a finished export to the user: share sheet, system viewer, or at
+  /// minimum a "saved to" message with a Share action if no viewer exists.
+  Future<void> _deliver(BuildContext context, File file, {required bool asPdf, required String subtitle, required bool shareDirectly}) async {
+    final String kind = asPdf ? 'pdf_summary'.tr() : 'csv_spreadsheet'.tr();
+    final String mime = asPdf ? 'application/pdf' : 'text/csv';
+    final String location = ReportExporter.isUserVisible(file.parent) ? 'Downloads/PocketPilot' : file.parent.path;
+
+    Future<void> share() async {
+      try {
+        await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path, mimeType: mime)], text: 'PocketPilot report - $subtitle'));
+      } catch (error, stackTrace) {
+        if (context.mounted) AppFeedback.error(context, FailureMapper.from(error, stackTrace));
+      }
+    }
+
+    if (shareDirectly) {
+      await share();
+      return;
+    }
+
+    OpenResult opened;
+    try {
+      opened = await OpenFilex.open(file.path, type: mime);
+    } catch (error) {
+      opened = OpenResult(type: ResultType.error, message: error.toString());
+    }
+    debugPrint('[export] open ${file.path} -> ${opened.type} ${opened.message}');
+    if (!context.mounted) return;
+
+    if (opened.type == ResultType.done) {
+      AppFeedback.success(context, '$kind saved to $location');
+      return;
+    }
+
+    // No viewer installed (common for CSV) — tell them where it is and offer the share sheet.
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 6),
+          content: Text('$kind saved to $location'),
+          action: SnackBarAction(label: 'share'.tr(), onPressed: share),
+        ),
+      );
   }
 }
 
@@ -282,12 +366,12 @@ class _SummaryGrid extends StatelessWidget {
           Row(
             children: <Widget>[
               _Metric(
-                label: 'Income',
+                label: 'income'.tr(),
                 value: summary.income.toCurrency(currencyCode: currencyCode),
                 color: context.finance.income,
               ),
               _Metric(
-                label: 'Expenses',
+                label: 'expenses'.tr(),
                 value: summary.expense.toCurrency(currencyCode: currencyCode),
                 color: context.finance.expense,
               ),
@@ -297,11 +381,11 @@ class _SummaryGrid extends StatelessWidget {
           Row(
             children: <Widget>[
               _Metric(
-                label: 'Net',
+                label: 'net'.tr(),
                 value: summary.balance.toSignedCurrency(currencyCode: currencyCode),
                 color: summary.balance >= 0 ? context.finance.income : context.finance.expense,
               ),
-              _Metric(label: 'Savings rate', value: summary.savingsRate.toPercent(), color: context.finance.savings),
+              _Metric(label: 'savings_rate'.tr(), value: summary.savingsRate.toPercent(), color: context.finance.savings),
             ],
           ),
         ],
@@ -350,10 +434,10 @@ class _TrendCard extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(child: Text('Income vs expenses', style: context.text.titleSmall)),
-              _ChartLegend(color: context.finance.income, label: 'Income'),
+              Expanded(child: Text('income_vs_expenses'.tr(), style: context.text.titleSmall)),
+              _ChartLegend(color: context.finance.income, label: 'income'.tr()),
               AppSpacing.md.gapW,
-              _ChartLegend(color: context.finance.expense, label: 'Expenses'),
+              _ChartLegend(color: context.finance.expense, label: 'expenses'.tr()),
             ],
           ),
           AppSpacing.lg.gapH,
@@ -362,7 +446,7 @@ class _TrendCard extends ConsumerWidget {
               children: <Widget>[
                 IncomeExpenseBarChart(points: points, currencyCode: currency),
                 AppSpacing.xl.gapH,
-                Text('Running balance', style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant)),
+                Text('running_balance'.tr(), style: context.text.labelMedium?.copyWith(color: context.colors.onSurfaceVariant)),
                 AppSpacing.md.gapH,
                 BalanceLineChart(points: points, currencyCode: currency),
               ],
@@ -417,13 +501,13 @@ class _BreakdownCard extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Text('By category', style: context.text.titleSmall),
+              Text('by_category'.tr(), style: context.text.titleSmall),
               const Spacer(),
               SegmentedButton<bool>(
                 style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                segments: const <ButtonSegment<bool>>[
-                  ButtonSegment<bool>(value: true, label: Text('Out')),
-                  ButtonSegment<bool>(value: false, label: Text('In')),
+                segments: <ButtonSegment<bool>>[
+                  ButtonSegment<bool>(value: true, label: Text('out'.tr())),
+                  ButtonSegment<bool>(value: false, label: Text('in'.tr())),
                 ],
                 selected: <bool>{expenses},
                 onSelectionChanged: (Set<bool> selection) => ref.read(reportShowsExpensesProvider.notifier).setExpenses(expenses: selection.first),
@@ -433,7 +517,7 @@ class _BreakdownCard extends ConsumerWidget {
           AppSpacing.lg.gapH,
           slices.when(
             data: (List<CategorySlice> data) => data.isEmpty
-                ? const AppEmptyState(icon: Icons.pie_chart_outline_rounded, title: 'Nothing to show', message: 'No activity in this period.')
+                ? AppEmptyState(icon: Icons.pie_chart_outline_rounded, title: 'nothing_to_show'.tr(), message: 'no_activity_in_this_period'.tr())
                 : CategoryDonutChart(slices: data.take(8).toList(), currencyCode: currency),
             loading: () => AppShimmer.box(height: 240),
             error: (Object error, _) => Text('$error'),
@@ -458,7 +542,7 @@ class _TopCategories extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('Ranked', style: context.text.titleMedium),
+        Text('ranked'.tr(), style: context.text.titleMedium),
         AppSpacing.md.gapH,
         AppCard(
           child: Column(

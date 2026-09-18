@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,19 +26,19 @@ class CategoriesScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Categories')),
+      appBar: AppBar(title: Text('categories'.tr())),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.pushNamed(AppRoutes.categoryForm),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New'),
+        label: Text('new'.tr()),
       ),
       body: categories.when(
         data: (List<Category> all) {
           if (all.isEmpty) {
-            return const AppEmptyState(
+            return AppEmptyState(
               icon: Icons.category_outlined,
-              title: 'No categories',
-              message: 'Add one to start organising your spending.',
+              title: 'no_categories'.tr(),
+              message: 'add_one_to_start_organising_your_spending'.tr(),
             );
           }
 
@@ -62,11 +63,11 @@ class CategoriesScreen extends ConsumerWidget {
             ),
             children: <Widget>[
               if (income.isNotEmpty)
-                _Group(title: 'Income', categories: income, all: all),
+                _Group(title: 'income'.tr(), categories: income, all: all),
               if (expense.isNotEmpty)
-                _Group(title: 'Expenses', categories: expense, all: all),
+                _Group(title: 'expenses'.tr(), categories: expense, all: all),
               if (both.isNotEmpty)
-                _Group(title: 'Both', categories: both, all: all),
+                _Group(title: 'both'.tr(), categories: both, all: all),
             ],
           );
         },
@@ -169,12 +170,11 @@ class _CategoryRow extends ConsumerWidget {
     return AppFeedback.sheet<String>(
       context,
       child: AppBottomSheet(
-        title: 'Move transactions to…',
+        title: 'move_transactions_to'.tr(),
         child: Column(
           children: <Widget>[
             Text(
-              '"${category.name}" is still in use. Pick where its '
-              'transactions should go.',
+              '"${category.name}" is still in use. Pick where its transactions should go.',
               style: context.text.bodySmall?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
@@ -207,7 +207,7 @@ class _CategoryRow extends ConsumerWidget {
       title: Text(category.name),
       subtitle: category.isDefault
           ? Text(
-              'Built-in',
+              'built_in'.tr(),
               style: context.text.labelSmall?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
@@ -223,8 +223,8 @@ class _CategoryRow extends ConsumerWidget {
           }
         },
         itemBuilder: (_) => <PopupMenuEntry<String>>[
-          const PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
-          const PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
+          PopupMenuItem<String>(value: 'edit', child: Text('edit'.tr())),
+          PopupMenuItem<String>(value: 'delete', child: Text('delete'.tr())),
         ],
       ),
       onTap: () =>

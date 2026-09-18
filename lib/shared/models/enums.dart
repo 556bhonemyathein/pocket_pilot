@@ -5,15 +5,20 @@
 /// a horizontal dependency between siblings.
 library;
 
+import 'package:easy_localization/easy_localization.dart';
+
 /// What a money movement does to the balance.
 enum TransactionType {
-  income('Income'),
-  expense('Expense'),
-  transfer('Transfer');
+  income('income'),
+  expense('expense'),
+  transfer('transfer');
 
-  const TransactionType(this.label);
+  const TransactionType(this.labelKey);
 
-  final String label;
+  /// Translation key; [label] resolves it for the active locale.
+  final String labelKey;
+
+  String get label => labelKey.tr();
 
   /// Signed multiplier applied when summing into the balance.
   /// A transfer moves money between the user's own pots, so it is balance
@@ -70,15 +75,18 @@ enum SyncStatus {
 
 /// How often a recurring transaction repeats.
 enum RecurrenceRule {
-  none('Does not repeat'),
-  daily('Daily'),
-  weekly('Weekly'),
-  monthly('Monthly'),
-  yearly('Yearly');
+  none('does_not_repeat'),
+  daily('daily'),
+  weekly('weekly'),
+  monthly('monthly'),
+  yearly('yearly');
 
-  const RecurrenceRule(this.label);
+  const RecurrenceRule(this.labelKey);
 
-  final String label;
+  /// Translation key; [label] resolves it for the active locale.
+  final String labelKey;
+
+  String get label => labelKey.tr();
 
   /// Next occurrence after [from], or `null` when the rule does not repeat.
   DateTime? next(DateTime from) => switch (this) {
@@ -98,24 +106,30 @@ enum RecurrenceRule {
 
 /// Reporting window presets.
 enum ReportPeriod {
-  weekly('This week'),
-  monthly('This month'),
-  yearly('This year'),
-  custom('Custom range');
+  weekly('this_week'),
+  monthly('this_month'),
+  yearly('this_year'),
+  custom('custom_range');
 
-  const ReportPeriod(this.label);
+  const ReportPeriod(this.labelKey);
 
-  final String label;
+  /// Translation key; [label] resolves it for the active locale.
+  final String labelKey;
+
+  String get label => labelKey.tr();
 }
 
 /// Sort options offered by the transaction list.
 enum TransactionSort {
-  dateDesc('Newest first'),
-  dateAsc('Oldest first'),
-  amountDesc('Highest amount'),
-  amountAsc('Lowest amount');
+  dateDesc('newest_first'),
+  dateAsc('oldest_first'),
+  amountDesc('highest_amount'),
+  amountAsc('lowest_amount');
 
-  const TransactionSort(this.label);
+  const TransactionSort(this.labelKey);
 
-  final String label;
+  /// Translation key; [label] resolves it for the active locale.
+  final String labelKey;
+
+  String get label => labelKey.tr();
 }

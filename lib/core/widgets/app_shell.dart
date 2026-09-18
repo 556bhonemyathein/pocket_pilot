@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,24 +21,24 @@ class AppShell extends ConsumerWidget {
 
   final StatefulNavigationShell shell;
 
-  static const List<_NavItem> _items = <_NavItem>[
+  static List<_NavItem> get _items => <_NavItem>[
     _NavItem(
-      label: 'Home',
+      label: 'home'.tr(),
       icon: Icons.space_dashboard_outlined,
       activeIcon: Icons.space_dashboard_rounded,
     ),
     _NavItem(
-      label: 'Activity',
+      label: 'activity'.tr(),
       icon: Icons.receipt_long_outlined,
       activeIcon: Icons.receipt_long_rounded,
     ),
     _NavItem(
-      label: 'Reports',
+      label: 'reports'.tr(),
       icon: Icons.insights_outlined,
       activeIcon: Icons.insights_rounded,
     ),
     _NavItem(
-      label: 'Profile',
+      label: 'profile'.tr(),
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
     ),
@@ -75,7 +76,7 @@ class AppShell extends ConsumerWidget {
               heroTag: 'add-transaction',
               onPressed: () => _openForm(context),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Add'),
+              label: Text('add'.tr()),
             ).animate().scaleXY(
               begin: 0.7,
               duration: 260.ms,

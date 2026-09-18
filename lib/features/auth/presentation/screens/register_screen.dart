@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -67,7 +68,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
+      appBar: AppBar(title: Text('create_account'.tr())),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -79,45 +80,45 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('Start tracking in under a minute.', style: context.text.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant)),
+                    Text('start_tracking_in_under_a_minute'.tr(), style: context.text.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant)),
                     AppSpacing.xxl.gapH,
 
                     AppTextField(
                       controller: _name,
-                      label: 'Full name',
+                      label: 'full_name'.tr(),
                       hint: 'Ada Lovelace',
                       prefixIcon: Icons.person_outline_rounded,
                       textInputAction: TextInputAction.next,
                       autofillHints: const <String>[AutofillHints.name],
                       errorText: _fieldErrors['name']?.firstOrNull,
-                      validator: (String? value) => (value ?? '').trim().length >= 2 ? null : 'Enter your name',
+                      validator: (String? value) => (value ?? '').trim().length >= 2 ? null : 'enter_your_name'.tr(),
                     ),
                     AppSpacing.lg.gapH,
 
                     AppTextField(
                       controller: _email,
-                      label: 'Email',
+                      label: 'email'.tr(),
                       hint: 'you@example.com',
                       prefixIcon: Icons.mail_outline_rounded,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const <String>[AutofillHints.email],
                       errorText: _fieldErrors['email']?.firstOrNull,
-                      validator: (String? value) => (value ?? '').isValidEmail ? null : 'Enter a valid email address',
+                      validator: (String? value) => (value ?? '').isValidEmail ? null : 'enter_a_valid_email_address'.tr(),
                     ),
                     AppSpacing.lg.gapH,
 
                     AppTextField(
                       controller: _password,
-                      label: 'Password',
-                      hint: 'At least 8 characters',
+                      label: 'password'.tr(),
+                      hint: 'at_least_8_characters'.tr(),
                       prefixIcon: Icons.lock_outline_rounded,
                       obscureText: true,
                       textInputAction: TextInputAction.next,
                       autofillHints: const <String>[AutofillHints.newPassword],
                       errorText: _fieldErrors['password']?.firstOrNull,
                       onChanged: (_) => setState(() {}),
-                      validator: (String? value) => (value ?? '').isStrongPassword ? null : 'Use 8+ characters with a letter and a number',
+                      validator: (String? value) => (value ?? '').isStrongPassword ? null : 'use_8_characters_with_a_letter_and_a_number'.tr(),
                     ),
                     AppSpacing.sm.gapH,
                     _PasswordStrength(password: _password.text),
@@ -125,24 +126,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                     AppTextField(
                       controller: _confirm,
-                      label: 'Confirm password',
+                      label: 'confirm_password'.tr(),
                       prefixIcon: Icons.lock_reset_rounded,
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _submit(),
-                      validator: (String? value) => value == _password.text ? null : 'Passwords do not match',
+                      validator: (String? value) => value == _password.text ? null : 'passwords_do_not_match'.tr(),
                     ),
                     AppSpacing.xxl.gapH,
 
-                    AppButton(label: 'Create account', isLoading: _submitting, onPressed: _submit),
+                    AppButton(label: 'create_account'.tr(), isLoading: _submitting, onPressed: _submit),
                     AppSpacing.lg.gapH,
                     Text.rich(
                       TextSpan(
-                        text: 'By continuing you agree to our Terms and ',
+                        text: 'by_continuing_you_agree_to_our_terms_and'.tr(),
                         style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant),
                         children: <InlineSpan>[
                           TextSpan(
-                            text: 'Privacy Policy',
+                            text: 'privacy_policy'.tr(),
                             style: TextStyle(color: context.colors.primary, decoration: TextDecoration.underline),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () async {
@@ -196,9 +197,9 @@ class _PasswordStrength extends StatelessWidget {
 
     final int score = _score;
     final (String label, Color color) = switch (score) {
-      <= 1 => ('Weak', context.finance.expense),
-      2 || 3 => ('Fair', context.finance.savings),
-      _ => ('Strong', context.finance.income),
+      <= 1 => ('weak'.tr(), context.finance.expense),
+      2 || 3 => ('fair'.tr(), context.finance.savings),
+      _ => ('strong'.tr(), context.finance.income),
     };
 
     return Row(
