@@ -8,7 +8,6 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/settings/presentation/providers/settings_providers.dart';
 import 'shared/providers/app_config_provider.dart';
-import 'shared/providers/sync_providers.dart';
 
 class PocketPilotApp extends ConsumerWidget {
   const PocketPilotApp({super.key});
@@ -22,8 +21,6 @@ class PocketPilotApp extends ConsumerWidget {
     final config = ref.watch(appConfigProvider);
     final GoRouter router = ref.watch(routerProvider);
     final ThemeMode themeMode = ref.watch(persistedThemeModeProvider);
-
-    ref.watch(syncCoordinatorProvider);
 
     return MaterialApp.router(
       title: config.appName,

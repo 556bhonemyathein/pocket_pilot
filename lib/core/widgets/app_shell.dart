@@ -4,15 +4,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../shared/providers/core_providers.dart';
-import '../../shared/providers/sync_providers.dart';
 import '../config/app_routes.dart';
 import '../extensions/extensions.dart';
 import '../theme/app_dimens.dart';
-import 'app_state_views.dart';
 import 'glass_panel.dart';
 
-/// The persistent app frame: bottom navigation, offline banner, and FAB.
+/// The persistent app frame: bottom navigation and FAB.
 ///
 /// It wraps `StatefulNavigationShell`, so each tab keeps its own navigation
 /// stack and scroll position across switches.
@@ -50,30 +47,20 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bool isOnline = ref.watch(isOnlineProvider);
-    final int pending = ref.watch(pendingSyncCountProvider).value ?? 0;
-
     // Wide screens get a rail instead of a bottom bar — thumbs cannot reach
     // the bottom of a tablet held in landscape.
     final bool useRail = !context.isMobile;
 
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          if (!isOnline) OfflineBanner(pendingCount: pending),
-          Expanded(
-            child: useRail
-                ? Row(
-                    children: <Widget>[
-                      _NavRail(shell: shell, items: _items(context)),
-                      const VerticalDivider(width: 1),
-                      Expanded(child: shell),
-                    ],
-                  )
-                : shell,
-          ),
-        ],
-      ),
+      body: useRail
+          ? Row(
+              children: <Widget>[
+                _NavRail(shell: shell, items: _items(context)),
+                const VerticalDivider(width: 1),
+                Expanded(child: shell),
+              ],
+            )
+          : shell,
       bottomNavigationBar: useRail ? null : _GlassNavBar(shell: shell, items: _items(context)),
       floatingActionButton: _shouldShowFab(context)
           ? FloatingActionButton.extended(

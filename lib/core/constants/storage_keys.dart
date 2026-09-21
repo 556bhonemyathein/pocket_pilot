@@ -16,5 +16,4 @@ abstract final class StorageKeys {
   static const String rememberMe = 'pp.pref.remember_me';
   static const String notificationsEnabled = 'pp.pref.notifications_enabled';
   static const String searchHistory = 'pp.pref.search_history';
-  static const String lastSyncAt = 'pp.pref.last_sync_at';
 }

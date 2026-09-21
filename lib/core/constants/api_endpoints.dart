@@ -19,7 +19,6 @@ abstract final class ApiEndpoints {
   // ── Transactions ────────────────────────────────────────────────────────────
   static const String transactions = '/transactions';
   static String transaction(String id) => '/transactions/$id';
-  static const String transactionsSync = '/transactions/sync';
 
   // ── Categories ──────────────────────────────────────────────────────────────
   static const String categories = '/categories';

@@ -11,7 +11,6 @@ import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/glass_panel.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../shared/models/app_user.dart';
-import '../../../../shared/providers/sync_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../../settings/presentation/widgets/language_picker.dart';
@@ -23,7 +22,6 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppUser? user = ref.watch(currentUserProvider);
-    final int pending = ref.watch(pendingSyncCountProvider).value ?? 0;
     final String language = ref.watch(languageProvider);
 
     return Scaffold(
@@ -72,7 +70,6 @@ class ProfileScreen extends ConsumerWidget {
                       subtitle: languageLabel(language),
                       onTap: () => pickLanguage(context, ref),
                     ),
-                    _SyncTile(pending: pending),
                   ],
                 ),
                 AppSpacing.xxl.gapH,
@@ -156,13 +153,12 @@ class _Section extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.title, required this.onTap, this.subtitle, this.trailing});
+  const _Tile({required this.icon, required this.title, required this.onTap, this.subtitle});
 
   final IconData icon;
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -170,64 +166,8 @@ class _Tile extends StatelessWidget {
       leading: Icon(icon, size: 22),
       title: Text(title),
       subtitle: subtitle == null ? null : Text(subtitle!, style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant)),
-      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, size: 20),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 20),
       onTap: onTap,
-    );
-  }
-}
-
-/// Manual sync with a live pending count.
-class _SyncTile extends ConsumerStatefulWidget {
-  const _SyncTile({required this.pending});
-
-  final int pending;
-
-  @override
-  ConsumerState<_SyncTile> createState() => _SyncTileState();
-}
-
-class _SyncTileState extends ConsumerState<_SyncTile> {
-  bool _syncing = false;
-
-  Future<void> _sync() async {
-    setState(() => _syncing = true);
-    final report = await ref.read(syncCoordinatorProvider.notifier).syncNow();
-    ref.invalidate(pendingSyncCountProvider);
-
-    if (!mounted) return;
-    setState(() => _syncing = false);
-
-    if (report.isSuccess) {
-      AppFeedback.success(
-        context,
-        report.pushed == 0
-            ? 'everything_is_already_up_to_date'.tr()
-            : 'synced_changes'.plural(report.pushed),
-      );
-    } else {
-      AppFeedback.warning(
-        context,
-        'changes_could_not_sync'.plural(report.failed),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final DateTime? last = ref.read(syncCoordinatorProvider.notifier).lastSyncAt;
-
-    return _Tile(
-      icon: Icons.sync_rounded,
-      title: 'sync_now'.tr(),
-      subtitle: widget.pending > 0
-          ? 'pending_changes'.plural(widget.pending)
-          : last == null
-          ? 'never_synced'.tr()
-          : 'last_synced_formattedwithtime'.tr(namedArgs: <String, String>{'formattedWithTime': last.formattedWithTime}),
-      onTap: _syncing ? () {} : _sync,
-      trailing: _syncing
-          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-          : Badge(isLabelVisible: widget.pending > 0, label: Text('${widget.pending}'), child: const Icon(Icons.chevron_right_rounded, size: 20)),
     );
   }
 }

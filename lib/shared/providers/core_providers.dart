@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
-import '../../core/network/connectivity_service.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/storage/isar_service.dart';
 import '../../core/storage/preferences_service.dart';
@@ -33,30 +32,6 @@ final preferencesServiceProvider = Provider<PreferencesService>(
 final secureStorageProvider = Provider<SecureStorageService>(
   (Ref ref) => SecureStorageService(),
   name: 'secureStorage',
-);
-
-final connectivityServiceProvider = Provider<ConnectivityService>(
-  (Ref ref) => ConnectivityService(),
-  name: 'connectivity',
-);
-
-/// Live connectivity as a stream — the offline banner and the sync engine both
-/// watch this. A `StreamProvider` is exactly right here: the source is a
-/// push-based stream and Riverpod handles the subscription lifecycle.
-final connectivityStreamProvider = StreamProvider<bool>((Ref ref) async* {
-  final ConnectivityService service = ref.watch(connectivityServiceProvider);
-  // Seed with the current value so listeners do not sit in `loading` until the
-  // first interface change.
-  yield await service.isOnline;
-  yield* service.onStatusChange;
-}, name: 'connectivityStream');
-
-/// Convenience: `true` when we believe we can reach the network.
-/// Defaults to online while the first check is in flight, so a cold start
-/// never renders an incorrect "offline" banner.
-final isOnlineProvider = Provider<bool>(
-  (Ref ref) => ref.watch(connectivityStreamProvider).value ?? true,
-  name: 'isOnline',
 );
 
 /// The configured HTTP client.

@@ -76,15 +76,6 @@ class PreferencesService {
 
   Future<void> clearSearchHistory() => _prefs.remove(StorageKeys.searchHistory);
 
-  // ── Sync bookkeeping ────────────────────────────────────────────────────────
-
-  DateTime? get lastSyncAt {
-    final int? millis = _prefs.getInt(StorageKeys.lastSyncAt);
-    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
-  }
-
-  Future<void> setLastSyncAt(DateTime value) => _prefs.setInt(StorageKeys.lastSyncAt, value.millisecondsSinceEpoch);
-
   // ── Backup / restore ────────────────────────────────────────────────────────
 
   /// Serialises every preference so "Backup" can bundle settings alongside the

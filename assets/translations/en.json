@@ -134,10 +134,6 @@
   "theme_language_backup": "Theme, language, backup",
   "signed_out": "Signed out",
   "member_since_monthyear": "Member since {monthYear}",
-  "everything_is_already_up_to_date": "Everything is already up to date",
-  "sync_now": "Sync now",
-  "never_synced": "Never synced",
-  "last_synced_formattedwithtime": "Last synced {formattedWithTime}",
   "sign_out": "Sign out?",
   "your_data_stays_on_this_device_and_will_be_here": "Your data stays on this device and will be here when you sign back in.",
   "sign_out_2": "Sign out",
@@ -264,18 +260,6 @@
   "failure_cache": "Could not read local data.",
   "failure_cancelled": "Request cancelled.",
   "failure_unknown": "Unexpected error. Please try again.",
-  "synced_changes": {
-    "one": "Synced {} change",
-    "other": "Synced {} changes"
-  },
-  "changes_could_not_sync": {
-    "one": "{} change could not sync — we will retry",
-    "other": "{} changes could not sync — we will retry"
-  },
-  "pending_changes": {
-    "one": "{} pending change",
-    "other": "{} pending changes"
-  },
   "results_count": {
     "one": "{} result",
     "other": "{} results"

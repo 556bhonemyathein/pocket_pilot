@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/date_time_extensions.dart';
 import '../../../../shared/models/category.dart';
-import '../../../../shared/providers/sync_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../categories/presentation/providers/category_providers.dart';
 import '../../../reports/presentation/widgets/charts.dart';
@@ -100,7 +99,6 @@ final monthlyBudgetProvider = Provider<double>((Ref ref) => ref.watch(currentUse
 Future<void> refreshDashboard(WidgetRef ref) async {
   ref
     ..invalidate(weeklySeriesProvider)
-    ..invalidate(monthByCategoryProvider)
-    ..invalidate(pendingSyncCountProvider);
+    ..invalidate(monthByCategoryProvider);
   await ref.read(weeklySeriesProvider.future);
 }
