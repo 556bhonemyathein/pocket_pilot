@@ -43,7 +43,15 @@ class PocketPilotApp extends ConsumerWidget {
         final MediaQueryData mq = MediaQuery.of(context);
         return MediaQuery(
           data: mq.copyWith(textScaler: mq.textScaler.clamp(minScaleFactor: 0.9, maxScaleFactor: 1.3)),
-          child: _LanguageSwitchOverlay(child: child ?? const SizedBox.shrink()),
+          child: _LanguageSwitchOverlay(
+            // `'key'.tr()` reads a static and registers no dependency, so a
+            // screen parked in an inactive tab (Reports, Activity) would keep
+            // its old strings until something else rebuilt it. Re-keying the
+            // router on the locale rebuilds every screen in one pass; the
+            // splash overlay above hides the swap. GoRouter keeps the current
+            // location, so the user lands back where they were.
+            child: KeyedSubtree(key: ValueKey<Locale>(context.locale), child: child ?? const SizedBox.shrink()),
+          ),
         );
       },
     );
