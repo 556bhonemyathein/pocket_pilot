@@ -21,24 +21,28 @@ class AppShell extends ConsumerWidget {
 
   final StatefulNavigationShell shell;
 
-  static List<_NavItem> get _items => <_NavItem>[
+  /// The shell sits outside the tab navigators, so a locale change does not
+  /// reach it through route rebuilds. Translating with `context` registers a
+  /// dependency on the app's `Localizations`, which makes the tab labels and
+  /// FAB text re-render the moment the language switches.
+  static List<_NavItem> _items(BuildContext context) => <_NavItem>[
     _NavItem(
-      label: 'home'.tr(),
+      label: 'home'.tr(context: context),
       icon: Icons.space_dashboard_outlined,
       activeIcon: Icons.space_dashboard_rounded,
     ),
     _NavItem(
-      label: 'activity'.tr(),
+      label: 'activity'.tr(context: context),
       icon: Icons.receipt_long_outlined,
       activeIcon: Icons.receipt_long_rounded,
     ),
     _NavItem(
-      label: 'reports'.tr(),
+      label: 'reports'.tr(context: context),
       icon: Icons.insights_outlined,
       activeIcon: Icons.insights_rounded,
     ),
     _NavItem(
-      label: 'profile'.tr(),
+      label: 'profile'.tr(context: context),
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
     ),
@@ -61,7 +65,7 @@ class AppShell extends ConsumerWidget {
             child: useRail
                 ? Row(
                     children: <Widget>[
-                      _NavRail(shell: shell, items: _items),
+                      _NavRail(shell: shell, items: _items(context)),
                       const VerticalDivider(width: 1),
                       Expanded(child: shell),
                     ],
@@ -70,13 +74,13 @@ class AppShell extends ConsumerWidget {
           ),
         ],
       ),
-      bottomNavigationBar: useRail ? null : _GlassNavBar(shell: shell, items: _items),
-      floatingActionButton: _shouldShowFab
+      bottomNavigationBar: useRail ? null : _GlassNavBar(shell: shell, items: _items(context)),
+      floatingActionButton: _shouldShowFab(context)
           ? FloatingActionButton.extended(
               heroTag: 'add-transaction',
               onPressed: () => _openForm(context),
               icon: const Icon(Icons.add_rounded),
-              label: Text('add'.tr()),
+              label: Text('add'.tr(context: context)),
             ).animate().scaleXY(
               begin: 0.7,
               duration: 260.ms,
@@ -87,8 +91,15 @@ class AppShell extends ConsumerWidget {
   }
 
   /// The FAB belongs to the two tabs where "add a transaction" is the obvious
-  /// next action; on reports and profile it would be noise.
-  bool get _shouldShowFab => shell.currentIndex == 0 || shell.currentIndex == 1;
+  /// next action; on reports and profile it would be noise. It is also hidden
+  /// while the transaction form itself is open — an "add" button on top of the
+  /// add screen is redundant and covers the form's own submit button.
+  bool _shouldShowFab(BuildContext context) {
+    final bool onAddTab = shell.currentIndex == 0 || shell.currentIndex == 1;
+    if (!onAddTab) return false;
+    final String location = GoRouterState.of(context).uri.path;
+    return !location.contains(AppRoutes.transactionForm);
+  }
 
   void _openForm(BuildContext context) {
     final String base = shell.currentIndex == 0

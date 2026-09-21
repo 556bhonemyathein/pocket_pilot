@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/config/router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/settings/presentation/providers/settings_providers.dart';
 import 'shared/providers/app_config_provider.dart';
 import 'shared/providers/sync_providers.dart';
@@ -45,9 +46,42 @@ class PocketPilotApp extends ConsumerWidget {
         final MediaQueryData mq = MediaQuery.of(context);
         return MediaQuery(
           data: mq.copyWith(textScaler: mq.textScaler.clamp(minScaleFactor: 0.9, maxScaleFactor: 1.3)),
-          child: child ?? const SizedBox.shrink(),
+          child: _LanguageSwitchOverlay(child: child ?? const SizedBox.shrink()),
         );
       },
+    );
+  }
+}
+
+/// Lays the splash over the whole app while a language switch is in flight.
+///
+/// It sits above the router in `MaterialApp.builder`, so it covers every
+/// screen, sheet and the navigation shell while they re-translate.
+class _LanguageSwitchOverlay extends ConsumerWidget {
+  const _LanguageSwitchOverlay({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool switching = ref.watch(languageSwitchingProvider);
+
+    return Stack(
+      children: <Widget>[
+        child,
+        // Absorb taps while covered so nothing underneath reacts mid-switch.
+        Positioned.fill(
+          child: IgnorePointer(
+            ignoring: !switching,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: switching ? const SplashScreen(key: ValueKey<String>('language-splash')) : const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

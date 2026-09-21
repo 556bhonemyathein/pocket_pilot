@@ -44,6 +44,23 @@ class LanguageNotifier extends Notifier<String> {
 
 final languageProvider = NotifierProvider<LanguageNotifier, String>(LanguageNotifier.new, name: 'language');
 
+/// True while the app is re-rendering in a newly chosen language.
+///
+/// The app root shows a splash overlay for as long as this is set, so the
+/// user sees one clean transition instead of every screen re-translating in
+/// place.
+class LanguageSwitchingNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  set switching(bool value) => state = value;
+}
+
+final languageSwitchingProvider = NotifierProvider<LanguageSwitchingNotifier, bool>(
+  LanguageSwitchingNotifier.new,
+  name: 'languageSwitching',
+);
+
 /// Languages the app ships translations for.
 const List<({String code, String label})> kSupportedLanguages = <({String code, String label})>[
   (code: 'en', label: 'English'),

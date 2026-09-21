@@ -19,14 +19,13 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/widgets/currency_picker.dart';
 import '../providers/settings_providers.dart';
 
-/// App preferences: appearance, language, data, danger zone.
+/// App preferences: appearance, currency, data, danger zone.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeMode themeMode = ref.watch(persistedThemeModeProvider);
-    final String language = ref.watch(languageProvider);
     final bool notifications = ref.watch(notificationsEnabledProvider);
 
     return Scaffold(
@@ -61,18 +60,6 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Column(
               children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.language_rounded),
-                  title: Text('language'.tr()),
-                  subtitle: Text(
-                    kSupportedLanguages
-                        .firstWhere((({String code, String label}) l) => l.code == language, orElse: () => kSupportedLanguages.first)
-                        .label,
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-                  onTap: () => _pickLanguage(context, ref, language),
-                ),
-                const Divider(height: 1),
                 const _CurrencyTile(),
                 const Divider(height: 1),
                 SwitchListTile(
@@ -135,35 +122,6 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _pickLanguage(BuildContext context, WidgetRef ref, String current) async {
-    final String? picked = await AppFeedback.sheet<String>(
-      context,
-      child: AppBottomSheet(
-        title: 'language'.tr(),
-        child: Column(
-          children: <Widget>[
-            for (final ({String code, String label}) language in kSupportedLanguages)
-              ListTile(
-                title: Text(language.label),
-                trailing: language.code == current ? Icon(Icons.check_circle_rounded, color: context.colors.primary) : null,
-                onTap: () => Navigator.of(context).pop(language.code),
-              ),
-          ],
-        ),
-      ),
-    );
-
-    if (picked != null) {
-      await ref.read(languageProvider.notifier).setLanguage(picked);
-      if (context.mounted) {
-        await context.setLocale(Locale(picked));
-      }
-      if (context.mounted) {
-        AppFeedback.info(context, 'language_updated'.tr());
-      }
-    }
   }
 }
 

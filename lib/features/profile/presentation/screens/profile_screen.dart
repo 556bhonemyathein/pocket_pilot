@@ -13,6 +13,8 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../../shared/models/app_user.dart';
 import '../../../../shared/providers/sync_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
+import '../../../settings/presentation/widgets/language_picker.dart';
 
 /// Account hub: identity, shortcuts, sign out.
 class ProfileScreen extends ConsumerWidget {
@@ -22,6 +24,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AppUser? user = ref.watch(currentUserProvider);
     final int pending = ref.watch(pendingSyncCountProvider).value ?? 0;
+    final String language = ref.watch(languageProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -62,6 +65,12 @@ class ProfileScreen extends ConsumerWidget {
                       title: 'settings'.tr(),
                       subtitle: 'theme_language_backup'.tr(),
                       onTap: () => context.pushNamed(AppRoutes.settings),
+                    ),
+                    _Tile(
+                      icon: Icons.language_rounded,
+                      title: 'language'.tr(),
+                      subtitle: languageLabel(language),
+                      onTap: () => pickLanguage(context, ref),
                     ),
                     _SyncTile(pending: pending),
                   ],
